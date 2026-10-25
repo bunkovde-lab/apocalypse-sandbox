@@ -15,6 +15,8 @@ const CRYSTAL := 9
 const SCRAP := 10
 const WOOD := 11
 const BEDROCK := 12
+const WORKBENCH := 13
+const FORGE := 14
 
 static var _loaded := false
 static var count := 0
@@ -26,6 +28,7 @@ static var specks := PackedColorArray()
 static var hardness := PackedFloat32Array()
 static var solid := PackedByteArray()
 static var placeable := PackedByteArray()
+static var station := PackedByteArray()      # 1 = станция крафта
 static var name_to_id := {}
 
 
@@ -44,6 +47,7 @@ static func ensure_loaded() -> void:
 	hardness.resize(count)
 	solid.resize(count)
 	placeable.resize(count)
+	station.resize(count)
 	for entry in data:
 		var id: int = int(entry["id"])
 		assert(id >= 0 and id < count, "id блока должны идти подряд с 0")
@@ -56,6 +60,7 @@ static func ensure_loaded() -> void:
 		hardness[id] = float(entry["hardness"])
 		solid[id] = 1 if bool(entry["solid"]) else 0
 		placeable[id] = 1 if bool(entry["placeable"]) else 0
+		station[id] = 1 if bool(entry.get("station", false)) else 0
 		name_to_id[names[id]] = id
 	_loaded = true
 

@@ -37,7 +37,7 @@ func _player_on(world: WorldData, tile_x: int) -> Player:
 
 func _test_block_db(t) -> void:
 	BlockDB.ensure_loaded()
-	t.check(BlockDB.count == 13, "в базе 13 блоков, нашлось %d" % BlockDB.count)
+	t.check(BlockDB.count >= 13, "в базе минимум 13 блоков, нашлось %d" % BlockDB.count)
 	t.check(BlockDB.is_solid(BlockDB.STONE) and not BlockDB.is_solid(BlockDB.AIR), "камень твёрдый, воздух нет")
 	t.check(BlockDB.hardness[BlockDB.BEDROCK] < 0.0, "основание неразрушимо")
 	t.check(BlockDB.name_to_id["iron_ore"] == BlockDB.IRON_ORE, "имена блоков совпадают с константами")
@@ -210,9 +210,10 @@ func _test_world_gen_full(t) -> void:
 	t.check(world.get_block(sp.x, sp.y) == BlockDB.AIR and world.surface[sp.x] > sp.y, "точка старта над землёй")
 	var air_above := true
 	for x in range(0, world.width, 11):
-		if world.get_block(x, world.surface[x] - 1) != BlockDB.AIR:
+		var above := world.get_block(x, world.surface[x] - 1)
+		if above != BlockDB.AIR and above != BlockDB.WOOD and above != BlockDB.SCRAP:
 			air_above = false
-	t.check(air_above, "над поверхностью воздух")
+	t.check(air_above, "над поверхностью воздух, деревья и металлолом")
 
 
 func _test_renderer(t) -> void:

@@ -13,6 +13,7 @@ var renderer: ChunkRenderer
 var player: Player
 var camera: Camera2D
 var hud: Hud
+var ui: InventoryUI
 var ready_done := false
 
 
@@ -45,6 +46,10 @@ func _ready() -> void:
 	player.add_child(camera)
 	camera.make_current()
 
+	ui = InventoryUI.new()
+	add_child(ui)
+	ui.setup(player)
+
 	renderer.update_view(player.tile_pos())
 	renderer.flush()
 	ready_done = true
@@ -59,5 +64,5 @@ func _process(_delta: float) -> void:
 	var col := clampi(tile.x, 0, world.width - 1)
 	var depth := tile.y - world.surface[col]
 	RenderingServer.set_default_clear_color(SKY_COLOR.lerp(DARK_COLOR, clampf(depth / 30.0, 0.0, 1.0)))
-	hud.set_text("FPS %d   x %d  y %d   глубина %d\n%s" % [
-		Engine.get_frames_per_second(), tile.x, tile.y, depth, player.hotbar_text()])
+	hud.set_text("FPS %d   x %d  y %d   глубина %d" % [
+		Engine.get_frames_per_second(), tile.x, tile.y, depth])

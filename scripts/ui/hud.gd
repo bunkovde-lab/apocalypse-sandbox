@@ -11,7 +11,7 @@ func _init() -> void:
 	label.position = Vector2(8, 6)
 	add_child(label)
 	_style(help)
-	help.text = "A/D ходьба, Пробел прыжок, ЛКМ копать, ПКМ ставить, 1-6 или колесо выбор блока"
+	help.text = "A/D ходьба, Пробел прыжок, ЛКМ копать, ПКМ ставить, 1-0 или колесо выбор ячейки, Tab инвентарь и крафт"
 	help.anchor_top = 1.0
 	help.anchor_bottom = 1.0
 	help.position = Vector2(8, -28)

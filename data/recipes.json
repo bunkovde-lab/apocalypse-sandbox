@@ -1,0 +1,13 @@
+[
+	{"result": "workbench", "count": 1, "station": "", "ingredients": {"wood": 10}},
+	{"result": "wood_pick", "count": 1, "station": "workbench", "ingredients": {"wood": 8}},
+	{"result": "wood_club", "count": 1, "station": "workbench", "ingredients": {"wood": 6}},
+	{"result": "concrete", "count": 2, "station": "workbench", "ingredients": {"stone": 2, "sand": 1}},
+	{"result": "forge", "count": 1, "station": "workbench", "ingredients": {"stone": 20, "scrap": 6}},
+	{"result": "iron_bar", "count": 1, "station": "forge", "ingredients": {"iron_ore": 3, "coal": 1}},
+	{"result": "copper_bar", "count": 1, "station": "forge", "ingredients": {"copper_ore": 3, "coal": 1}},
+	{"result": "iron_pick", "count": 1, "station": "forge", "ingredients": {"iron_bar": 8, "wood": 2}},
+	{"result": "iron_sword", "count": 1, "station": "forge", "ingredients": {"iron_bar": 6, "wood": 2}},
+	{"result": "pistol", "count": 1, "station": "forge", "ingredients": {"iron_bar": 8, "copper_bar": 4}},
+	{"result": "bullet", "count": 10, "station": "forge", "ingredients": {"copper_bar": 1, "coal": 1}}
+]

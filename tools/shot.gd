@@ -22,6 +22,10 @@ func _initialize() -> void:
 				if dy > 0:
 					main.world.set_block(x, y, BlockDB.AIR)
 		p.position = Vector2(tx * 16, ty * 16)
+	if OS.get_environment("SHOT_UI") == "1":
+		for item in {"wood": 24, "stone": 40, "scrap": 7, "iron_ore": 9, "coal": 4, "workbench": 1}.keys():
+			main.player.add_item(item, {"wood": 24, "stone": 40, "scrap": 7, "iron_ore": 9, "coal": 4, "workbench": 1}[item])
+		main.ui.toggle()
 	await create_timer(1.5).timeout
 	var img := root.get_viewport().get_texture().get_image()
 	img.save_png(out)

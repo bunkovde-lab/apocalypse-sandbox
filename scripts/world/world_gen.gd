@@ -16,6 +16,9 @@ const BIOME_COUNT := 5
 const TOP_BLOCK := [4, 3, 1, 1, 5]    # грязь, песок, земля, земля, бетон
 const TOP_DEPTH := [12, 14, 8, 6, 4]
 const AMPLITUDE := [0.4, 0.7, 0.5, 1.0, 0.2]
+# Шанс дерева и кучи металлолома на колонку по биомам.
+const TREE_CHANCE := [0.05, 0.01, 0.03, 0.025, 0.0]
+const SCRAP_CHANCE := [0.01, 0.015, 0.03, 0.03, 0.04]
 
 
 @warning_ignore("integer_division")
@@ -24,6 +27,7 @@ static func generate(seed_value: int, w: int = 4200, h: int = 1200) -> WorldData
 	world.seed_value = seed_value
 	_make_surface(world)
 	_fill_terrain(world)
+	_decorate_surface(world)
 	var cx := w / 2
 	world.spawn_tile = Vector2i(cx, world.surface[cx] - 4)
 	return world
@@ -118,3 +122,33 @@ static func _fill_terrain(world: WorldData) -> void:
 					id = BlockDB.CRYSTAL
 			fg[idx] = id
 	world.fg = fg
+
+
+## Мёртвые деревья (дают дерево) и кучи металлолома на поверхности. Возле старта (3 блока) пусто.
+@warning_ignore("integer_division")
+static func _decorate_surface(world: WorldData) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = world.seed_value + 20
+	var w := world.width
+	var cx := w / 2
+	var last_tree := -100
+	var last_pile := -100
+	for x in range(8, w - 8):
+		if absi(x - cx) <= 3:
+			continue
+		var b := world.biome[x]
+		var s := world.surface[x]
+		if x - last_tree >= 6 and rng.randf() < TREE_CHANCE[b]:
+			var h := rng.randi_range(4, 9)
+			for k in range(1, h + 1):
+				world.fg[(s - k) * w + x] = BlockDB.WOOD
+			last_tree = x
+		elif x - last_pile >= 10 and rng.randf() < SCRAP_CHANCE[b]:
+			var width := rng.randi_range(1, 3)
+			for dx in width:
+				var xx := x + dx
+				if absi(xx - cx) <= 3:
+					continue
+				for k in range(1, rng.randi_range(1, 2) + 1):
+					world.fg[(world.surface[xx] - k) * w + xx] = BlockDB.SCRAP
+			last_pile = x + width

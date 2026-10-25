@@ -1,0 +1,23 @@
+[
+	{"name": "dirt", "title": "Земля", "kind": "block"},
+	{"name": "stone", "title": "Камень", "kind": "block"},
+	{"name": "sand", "title": "Песок", "kind": "block"},
+	{"name": "mud", "title": "Грязь", "kind": "block"},
+	{"name": "concrete", "title": "Бетон", "kind": "block"},
+	{"name": "scrap", "title": "Металлолом", "kind": "block"},
+	{"name": "wood", "title": "Дерево", "kind": "block"},
+	{"name": "workbench", "title": "Верстак", "kind": "block"},
+	{"name": "forge", "title": "Кузница", "kind": "block"},
+	{"name": "iron_ore", "title": "Железная руда", "kind": "material"},
+	{"name": "copper_ore", "title": "Медная руда", "kind": "material"},
+	{"name": "coal", "title": "Уголь", "kind": "material"},
+	{"name": "crystal", "title": "Кристалл", "kind": "material"},
+	{"name": "iron_bar", "title": "Железный слиток", "kind": "material"},
+	{"name": "copper_bar", "title": "Медный слиток", "kind": "material"},
+	{"name": "bullet", "title": "Патрон", "kind": "ammo"},
+	{"name": "wood_pick", "title": "Деревянная кирка", "kind": "tool", "stack": 1, "power": 1.4},
+	{"name": "iron_pick", "title": "Железная кирка", "kind": "tool", "stack": 1, "power": 2.4},
+	{"name": "wood_club", "title": "Дубина", "kind": "weapon", "stack": 1, "damage": 12.0, "cooldown": 0.45, "range": 40.0},
+	{"name": "iron_sword", "title": "Железный меч", "kind": "weapon", "stack": 1, "damage": 28.0, "cooldown": 0.4, "range": 48.0},
+	{"name": "pistol", "title": "Пистолет", "kind": "gun", "stack": 1, "damage": 14.0, "cooldown": 0.3, "ammo": "bullet"}
+]
