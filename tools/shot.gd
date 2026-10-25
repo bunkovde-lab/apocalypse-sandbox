@@ -1,0 +1,29 @@
+extends SceneTree
+## Снимок экрана игры для проверки глазами.
+## Запуск: xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3 -s res://tools/shot.gd -- out.png [dx] [dy]
+## dx, dy: на сколько блоков сместить игрока от точки старта (dy > 0 вниз, при этом блоки на пути вынимаются).
+
+
+func _initialize() -> void:
+	var args := OS.get_cmdline_user_args()
+	var out: String = args[0] if args.size() > 0 else "/tmp/shot.png"
+	var main = load("res://scenes/main.tscn").instantiate()
+	root.add_child(main)
+	while not main.ready_done:
+		await process_frame
+	if args.size() >= 3:
+		var dx := int(args[1])
+		var dy := int(args[2])
+		var p: Player = main.player
+		var tx := p.tile_pos().x + dx
+		var ty: int = main.world.surface[tx] + dy if dy > 0 else main.world.surface[tx] - 3
+		for y in range(ty - 2, ty + 3):
+			for x in range(tx - 1, tx + 2):
+				if dy > 0:
+					main.world.set_block(x, y, BlockDB.AIR)
+		p.position = Vector2(tx * 16, ty * 16)
+	await create_timer(1.5).timeout
+	var img := root.get_viewport().get_texture().get_image()
+	img.save_png(out)
+	print("снимок сохранён: ", out, " ", img.get_size())
+	quit()

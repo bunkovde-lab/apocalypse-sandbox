@@ -1,0 +1,15 @@
+[
+	{"id": 0, "name": "air", "title": "Воздух", "color": "#00000000", "hardness": 0.0, "solid": false, "drop": "", "placeable": false},
+	{"id": 1, "name": "dirt", "title": "Земля", "color": "#6b4a2e", "hardness": 0.35, "solid": true, "drop": "dirt", "placeable": true},
+	{"id": 2, "name": "stone", "title": "Камень", "color": "#6b6e75", "hardness": 0.9, "solid": true, "drop": "stone", "placeable": true},
+	{"id": 3, "name": "sand", "title": "Песок", "color": "#c9a85c", "hardness": 0.25, "solid": true, "drop": "sand", "placeable": true},
+	{"id": 4, "name": "mud", "title": "Грязь", "color": "#4d4b2b", "hardness": 0.35, "solid": true, "drop": "mud", "placeable": true},
+	{"id": 5, "name": "concrete", "title": "Бетон", "color": "#8d8f8c", "hardness": 1.4, "solid": true, "drop": "concrete", "placeable": true},
+	{"id": 6, "name": "iron_ore", "title": "Железная руда", "color": "#6b6e75", "speck": "#c98a63", "hardness": 1.6, "solid": true, "drop": "iron_ore", "placeable": false},
+	{"id": 7, "name": "copper_ore", "title": "Медная руда", "color": "#6b6e75", "speck": "#d67a3a", "hardness": 1.4, "solid": true, "drop": "copper_ore", "placeable": false},
+	{"id": 8, "name": "coal", "title": "Уголь", "color": "#6b6e75", "speck": "#1d1d20", "hardness": 1.2, "solid": true, "drop": "coal", "placeable": false},
+	{"id": 9, "name": "crystal", "title": "Кристалл", "color": "#6b6e75", "speck": "#5fd6e0", "hardness": 2.0, "solid": true, "drop": "crystal", "placeable": false},
+	{"id": 10, "name": "scrap", "title": "Металлолом", "color": "#7d6f64", "hardness": 1.2, "solid": true, "drop": "scrap", "placeable": true},
+	{"id": 11, "name": "wood", "title": "Дерево", "color": "#8a6a3f", "hardness": 0.6, "solid": true, "drop": "wood", "placeable": true},
+	{"id": 12, "name": "bedrock", "title": "Основание", "color": "#2a2a30", "hardness": -1.0, "solid": true, "drop": "", "placeable": false}
+]
