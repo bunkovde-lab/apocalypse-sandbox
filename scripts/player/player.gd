@@ -47,6 +47,7 @@ var swing_time := 0.0         # для отрисовки взмаха
 var deaths := 0
 var home_state := 0           # 1 = бафф «Дом» (стабильность 80+), -1 = «Тревога» (кризис)
 var survivors: SurvivorManager
+var bosses: BossManager
 var mouse_world := Vector2.ZERO
 
 
@@ -113,8 +114,10 @@ func mine_tick(t: Vector2i, delta: float) -> bool:
 	var id := world.get_block(t.x, t.y)
 	if id == BlockDB.AIR:
 		return false
-	if id == BlockDB.TOMBSTONE:
-		return _mine_tombstone(t, delta)
+	if id == BlockDB.TOMBSTONE or id == BlockDB.LOOT:
+		return _mine_tombstone(t, delta, id)
+	if BlockDB.hardness[id] < 0.0:
+		return false
 	var drop := BlockDB.drops[id]
 	if drop != "" and not inv.can_add(drop, 1):
 		return false   # некуда класть добычу, блок не ломаем
@@ -125,7 +128,8 @@ func mine_tick(t: Vector2i, delta: float) -> bool:
 	return false
 
 
-func _mine_tombstone(t: Vector2i, delta: float) -> bool:
+## Надгробие или ящик с припасами: всё содержимое уходит в инвентарь, остаток возвращается в ящик.
+func _mine_tombstone(t: Vector2i, delta: float, id: int = BlockDB.TOMBSTONE) -> bool:
 	if not world.damage_block(t.x, t.y, mine_power() * delta):
 		return false
 	var loot: Dictionary = world.tombstones.get(t, {})
@@ -137,7 +141,7 @@ func _mine_tombstone(t: Vector2i, delta: float) -> bool:
 	world.tombstones.erase(t)
 	if not rest.is_empty():
 		world.tombstones[t] = rest        # не всё поместилось: надгробие остаётся с остатком
-		world.set_block(t.x, t.y, BlockDB.TOMBSTONE)
+		world.set_block(t.x, t.y, id)
 	return true
 
 
@@ -209,7 +213,22 @@ func place_selected(t: Vector2i) -> bool:
 	var item := selected_item()
 	if item == "":
 		return false
+	if ItemDB.kind(item) == "consumable":
+		return use_item(item)
 	return place_block(t, item)
+
+
+## Использует расходник (аптечка). Возвращает true, если предмет израсходован.
+func use_item(item: String) -> bool:
+	if ItemDB.kind(item) != "consumable" or inv.count(item) <= 0 or attack_cd > 0.0 or hp <= 0.0:
+		return false
+	var heal := ItemDB.stat(item, "heal")
+	if heal <= 0.0 or hp >= max_hp:
+		return false
+	inv.remove(item, 1)
+	hp = minf(max_hp, hp + heal)
+	attack_cd = 0.8
+	return true
 
 
 # ---------- Бой ----------
@@ -335,6 +354,8 @@ func _physics_process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("interact") and shelter != null:
 		var msg := survivors.interact_at(mouse_world, self) if survivors != null else ""
+		if msg == "" and bosses != null:
+			msg = bosses.interact(target_tile, self)
 		if msg == "":
 			msg = shelter.interact(target_tile, self)
 		if msg != "":

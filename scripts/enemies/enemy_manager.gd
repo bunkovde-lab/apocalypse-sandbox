@@ -55,12 +55,44 @@ func update(delta: float) -> void:
 		if not is_instance_valid(e) or e.dead:
 			continue
 		var touching: bool = e.update(delta, target, horde)
+		if e.ranged and not (e is Boss) and e.shoot_timer <= 0.0 and player.hp > 0.0:
+			_try_shoot(e)
 		if touching and e.attack_cd <= 0.0 and player.hp > 0.0:
 			if player.take_damage(e.damage, e.center().x):
 				e.attack_cd = Enemy.ATTACK_COOLDOWN
 		if e.center().distance_to(player.center()) > DESPAWN_DIST:
 			_remove(e)
 	_spawn_logic(delta)
+
+
+## Враг-стрелок стреляет, если игрок в радиусе и на линии огня.
+func _try_shoot(e: Enemy) -> bool:
+	var from := e.center()
+	var to := player.center()
+	if from.distance_to(to) > e.shot_range or not line_clear(from, to):
+		return false
+	e.shoot_timer = e.shot_cd
+	hostile_shot(from, to - from, e.shot_damage)
+	return true
+
+
+## true, если между точками нет твёрдых блоков.
+func line_clear(a: Vector2, b: Vector2) -> bool:
+	var n := maxi(1, ceili(a.distance_to(b) / 8.0))
+	for i in range(1, n):
+		var p := a.lerp(b, float(i) / n)
+		if world.is_solid(floori(p.x / 16.0), floori(p.y / 16.0)):
+			return false
+	return true
+
+
+func hostile_shot(from: Vector2, dir: Vector2, dmg: float, speed: float = 260.0, color: Color = Color("ff7a4a")) -> Projectile:
+	var p := fire(from, dir, dmg, speed)
+	p.hostile = true
+	p.hero = player
+	p.color = color
+	p.life = 2.5
+	return p
 
 
 func _spawn_logic(delta: float) -> void:
@@ -81,11 +113,11 @@ func _spawn_logic(delta: float) -> void:
 
 ## Создаёт врага на поверхности за краем экрана. Возвращает true, если нашлось место.
 func spawn_random(night: int) -> bool:
-	var def := EnemyDB.pick(night, rng)
 	for _attempt in 12:
 		var side := 1 if rng.randf() < 0.5 else -1
 		var x := player.tile_pos().x + side * rng.randi_range(SPAWN_MIN, SPAWN_MAX)
 		x = clampi(x, 4, world.width - 5)
+		var def := EnemyDB.pick(night, rng, world.biome[x])
 		var e := spawn_enemy(def, x, night)
 		if e != null:
 			return true
@@ -97,9 +129,16 @@ func spawn_enemy(def: Dictionary, tile_x: int, night: int = 1) -> Enemy:
 	for dy in range(1, 5):
 		if world.is_solid(tile_x, s - dy):
 			return null   # дерево или куча хлама
-	var e := Enemy.new()
+	return spawn_at(def, Vector2(tile_x * 16.0, 0.0), night, s * 16.0)
+
+
+## Создаёт врага (или босса) в точке. Если bottom_y задано, ставит его низом на эту высоту.
+func spawn_at(def: Dictionary, pos: Vector2, night: int = 1, bottom_y: float = -1.0) -> Enemy:
+	var e: Enemy = Boss.new() if def.has("boss") else Enemy.new()
 	e.setup(def, world, night)
-	e.position = Vector2(tile_x * 16.0, s * 16.0 - e.size.y)
+	if e is Boss:
+		(e as Boss).manager = self
+	e.position = pos if bottom_y < 0.0 else Vector2(pos.x, bottom_y - e.size.y)
 	e.died.connect(_on_enemy_died)
 	add_child(e)
 	enemies.append(e)

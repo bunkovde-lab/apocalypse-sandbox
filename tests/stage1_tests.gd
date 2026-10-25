@@ -211,9 +211,9 @@ func _test_world_gen_full(t) -> void:
 	var air_above := true
 	for x in range(0, world.width, 11):
 		var above := world.get_block(x, world.surface[x] - 1)
-		if above != BlockDB.AIR and above != BlockDB.WOOD and above != BlockDB.SCRAP:
+		if not [BlockDB.AIR, BlockDB.WOOD, BlockDB.SCRAP, BlockDB.CONCRETE, BlockDB.LOOT, BlockDB.ALTAR_RAIDER, BlockDB.MUD].has(above):
 			air_above = false
-	t.check(air_above, "над поверхностью воздух, деревья и металлолом")
+	t.check(air_above, "над поверхностью воздух, деревья, металлолом и постройки")
 
 
 func _test_renderer(t) -> void:

@@ -4,15 +4,18 @@ extends RefCounted
 
 signal night_started(night: int)
 signal dawn
+signal night_warning        # за 30 секунд до сумерек
 
 const DAY_LENGTH := 480.0       # секунд в сутках
 const NIGHT_START := 0.62
 const NIGHT_END := 0.94
+const WARNING_TIME := 30.0
 const FADE := 0.05              # длительность сумерек в долях суток
 const NIGHT_TINT := Color(0.45, 0.5, 0.72)
 
 var time := 0.1
 var day := 1
+var warned := false
 
 
 func is_night() -> bool:
@@ -26,9 +29,13 @@ func advance(delta: float) -> void:
 		time -= 1.0
 		day += 1
 	var now_night := is_night()
+	if not warned and not now_night and time < NIGHT_START and time >= NIGHT_START - WARNING_TIME / DAY_LENGTH:
+		warned = true
+		night_warning.emit()
 	if now_night and not was_night:
 		night_started.emit(day)
 	elif was_night and not now_night:
+		warned = false
 		dawn.emit()
 
 

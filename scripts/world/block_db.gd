@@ -28,6 +28,11 @@ const PLANTER := 22
 const PURIFIER := 23
 const CRATE := 24
 const RAIN_COLLECTOR := 25
+const REINFORCED := 26
+const PURIFIER2 := 27
+const LOOT := 28
+const ALTAR_RAIDER := 29
+const ALTAR_HIVE := 30
 
 static var _loaded := false
 static var count := 0

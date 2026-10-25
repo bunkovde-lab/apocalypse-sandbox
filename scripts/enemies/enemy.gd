@@ -18,6 +18,13 @@ var hp := 1.0
 var damage := 1.0
 var speed := 50.0
 var jump_speed := 470.0
+var ranged := false
+var shot_cd := 2.0
+var shot_range := 220.0
+var shot_damage := 8.0
+var shoot_timer := 1.0
+var keep_dist := 0.0             # дальний бой: не подходит ближе этого расстояния
+var retreat := false             # отступает, если игрок ближе 70% keep_dist
 var break_max := 0.0             # самый прочный блок, который враг может сгрызть
 var size := Vector2(14, 30)
 var color := Color.WHITE
@@ -43,6 +50,12 @@ func setup(d: Dictionary, w: WorldData, night: int = 1) -> void:
 	speed = float(d["speed"])
 	jump_speed = float(d.get("jump", 470.0))
 	break_max = float(d.get("break", 0.0))
+	ranged = bool(d.get("ranged", false))
+	shot_cd = float(d.get("shot_cd", 2.0))
+	shot_range = float(d.get("shot_range", 220.0))
+	shot_damage = float(d.get("shot_damage", 8.0))
+	keep_dist = float(d.get("keep", 0.0))
+	shoot_timer = randf_range(0.5, shot_cd)
 	size = Vector2(d["size"][0], d["size"][1])
 	color = Color.html(str(d["color"]))
 
@@ -60,6 +73,7 @@ func center() -> Vector2:
 func update(delta: float, target: Rect2, horde: bool) -> bool:
 	delta = minf(delta, 0.05)
 	attack_cd = maxf(0.0, attack_cd - delta)
+	shoot_timer = maxf(0.0, shoot_timer - delta)
 	hit_flash = maxf(0.0, hit_flash - delta)
 	var to := target.get_center() - center()
 	var move_dir := 0.0
@@ -69,6 +83,12 @@ func update(delta: float, target: Rect2, horde: bool) -> bool:
 	elif horde or to.length() < AGGRO_RANGE:
 		if absf(to.x) > 4.0:
 			move_dir = 1.0 if to.x > 0.0 else -1.0
+		if keep_dist > 0.0:
+			if retreat and absf(to.x) < keep_dist * 0.7:
+				move_dir = -move_dir
+			elif absf(to.x) < keep_dist:
+				move_dir = 0.0
+				facing = 1 if to.x > 0.0 else -1
 		if on_floor and (hit_wall or (to.y < -24.0 and absf(to.x) < 48.0)):
 			jump = true
 	else:

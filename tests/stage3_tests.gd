@@ -24,6 +24,7 @@ func _flat_world(w: int = 200, h: int = 64, floor_y: int = 40) -> WorldData:
 			world.fg[y * w + x] = BlockDB.STONE
 	for x in w:
 		world.surface[x] = floor_y
+	world.biome.fill(WorldGen.BIOME_RUINS)
 	return world
 
 

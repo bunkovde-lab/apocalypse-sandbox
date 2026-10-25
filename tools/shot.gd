@@ -70,6 +70,27 @@ func _initialize() -> void:
 		main.shelter.recompute_power()
 		main.player.position = Vector2((px + 3) * 16, (gy - 3) * 16)
 		main.player.spawn_pos = main.player.position
+	var boss_env := OS.get_environment("SHOT_BOSS")
+	if boss_env != "":
+		var want := "arena_hive" if boss_env == "2" else "arena_raider"
+		for st in main.world.structures:
+			if st["type"] == want:
+				var a: Vector2i = st["altar"]
+				main.player.position = Vector2((a.x - 3) * 16, (a.y - 1) * 16)
+				main.player.inv.add("raider_beacon", 1)
+				main.player.inv.add("spore_lure", 1)
+				main.player.add_item("iron_sword", 1)
+				main.camera.zoom = Vector2(1.5, 1.5)
+				main.renderer.update_view(main.player.tile_pos())
+				main.renderer.flush()
+				main.bosses.interact(a, main.player)
+				main.clock.time = 0.3
+				for _i in 150:
+					main.enemies.update(0.02)
+					main.bosses.update(0.02)
+				if boss_env == "2":
+					main.bosses.boss.cycle = 14.0
+				break
 	if OS.get_environment("SHOT_UI") == "1":
 		for item in {"wood": 24, "stone": 40, "scrap": 7, "iron_ore": 9, "coal": 4, "workbench": 1}.keys():
 			main.player.add_item(item, {"wood": 24, "stone": 40, "scrap": 7, "iron_ore": 9, "coal": 4, "workbench": 1}[item])

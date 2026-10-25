@@ -17,6 +17,7 @@ static func ensure_loaded() -> void:
 		var r: Dictionary = e
 		r["count"] = int(r.get("count", 1))
 		r["station"] = str(r.get("station", ""))
+		r["requires"] = str(r.get("requires", ""))
 		recipes.append(r)
 	_loaded = true
 
@@ -33,6 +34,8 @@ static func nearby_stations(world: WorldData, tile: Vector2i, rx: int = 6, ry: i
 
 
 static func is_craftable(inv: Inventory, stations: Dictionary, r: Dictionary) -> bool:
+	if not Progress.has(str(r.get("requires", ""))):
+		return false
 	var st: String = r["station"]
 	if st != "" and not stations.has(st):
 		return false

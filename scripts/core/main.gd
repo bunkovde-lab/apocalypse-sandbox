@@ -19,12 +19,15 @@ var clock := DayClock.new()
 var enemies: EnemyManager
 var shelter: ShelterManager
 var survivors: SurvivorManager
+var bosses: BossManager
+var camps: CampManager
 var tint: CanvasModulate
 var ready_done := false
 
 
 func _ready() -> void:
 	InputSetup.register()
+	Progress.reset()
 	hud = Hud.new()
 	add_child(hud)
 	hud.set_text("Генерация мира...")
@@ -61,10 +64,19 @@ func _ready() -> void:
 	add_child(survivors)
 	survivors.setup(world, player, shelter, clock)
 	survivors.message.connect(func(text: String) -> void: hud.flash_message(text, 3.0))
+	bosses = BossManager.new()
+	add_child(bosses)
+	bosses.setup(world, player, enemies)
+	bosses.message.connect(func(text: String) -> void: hud.flash_message(text, 4.0))
+	bosses.boss_changed.connect(hud.set_boss)
+	camps = CampManager.new()
+	add_child(camps)
+	camps.setup(world, player, enemies, clock)
 	for dx in [-55, 40, 85]:
 		survivors.spawn_stranded(clampi(world.spawn_tile.x + dx, 5, world.width - 6))
 	clock.night_started.connect(func(n: int) -> void: hud.flash_message("Ночь %d. Идёт орда." % n, 3.0))
 	clock.dawn.connect(func() -> void: hud.flash_message("Рассвет. Орда отступила.", 3.0))
+	clock.night_warning.connect(func() -> void: hud.flash_message("Скоро ночь: готовьте оборону!", 4.0))
 
 	camera = Camera2D.new()
 	camera.zoom = Vector2(2, 2)

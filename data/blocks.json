@@ -24,5 +24,10 @@
 	{"id": 22, "name": "planter", "title": "Грядка", "color": "#3f7a3a", "speck": "#9bd35a", "hardness": 0.5, "solid": false, "drop": "planter", "placeable": true, "device": true},
 	{"id": 23, "name": "purifier", "title": "Водоочиститель", "color": "#3a6a8a", "speck": "#9fe0ff", "hardness": 1.2, "solid": false, "drop": "purifier", "placeable": true, "device": true},
 	{"id": 24, "name": "crate", "title": "Склад", "color": "#7a5a3a", "speck": "#c9a96a", "hardness": 0.8, "solid": false, "drop": "crate", "placeable": true, "device": true},
-	{"id": 25, "name": "rain_collector", "title": "Сборник дождя", "color": "#4a5a6a", "speck": "#8fd0ff", "hardness": 0.6, "solid": false, "drop": "rain_collector", "placeable": true, "device": true}
+	{"id": 25, "name": "rain_collector", "title": "Сборник дождя", "color": "#4a5a6a", "speck": "#8fd0ff", "hardness": 0.6, "solid": false, "drop": "rain_collector", "placeable": true, "device": true},
+	{"id": 26, "name": "reinforced_concrete", "title": "Армированный бетон", "color": "#5d6670", "speck": "#2f3640", "hardness": 3.0, "solid": true, "drop": "reinforced_concrete", "placeable": true},
+	{"id": 27, "name": "purifier2", "title": "Фильтр-очиститель", "color": "#2f7f7a", "speck": "#b8fff0", "hardness": 1.5, "solid": false, "drop": "purifier2", "placeable": true, "device": true},
+	{"id": 28, "name": "loot", "title": "Ящик с припасами", "color": "#6a7a3a", "speck": "#e8d070", "hardness": 0.4, "solid": false, "drop": "", "placeable": false},
+	{"id": 29, "name": "altar_raider", "title": "Алтарь мародёров", "color": "#8a2f2f", "speck": "#ffd0a0", "hardness": -1.0, "solid": false, "drop": "", "placeable": false},
+	{"id": 30, "name": "altar_hive", "title": "Алтарь улья", "color": "#5a2f6a", "speck": "#b8ff80", "hardness": -1.0, "solid": false, "drop": "", "placeable": false}
 ]

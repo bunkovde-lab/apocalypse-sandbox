@@ -22,5 +22,10 @@
 	{"result": "planter", "count": 1, "station": "workbench", "ingredients": {"wood": 8, "dirt": 6}},
 	{"result": "purifier", "count": 1, "station": "forge", "ingredients": {"iron_bar": 4, "copper_bar": 2, "scrap": 4}},
 	{"result": "crate", "count": 1, "station": "workbench", "ingredients": {"wood": 10, "scrap": 2}},
-	{"result": "rain_collector", "count": 1, "station": "workbench", "ingredients": {"scrap": 6, "wood": 4}}
+	{"result": "rain_collector", "count": 1, "station": "workbench", "ingredients": {"scrap": 6, "wood": 4}},
+	{"result": "medkit", "count": 1, "station": "workbench", "ingredients": {"scrap": 3, "wood": 2, "coal": 1}},
+	{"result": "raider_beacon", "count": 1, "station": "forge", "ingredients": {"iron_bar": 4, "copper_bar": 2, "scrap": 6}},
+	{"result": "spore_lure", "count": 1, "station": "workbench", "ingredients": {"mud": 12, "wood": 6, "coal": 3}},
+	{"result": "reinforced_concrete", "count": 2, "station": "forge", "requires": "boss_1", "ingredients": {"concrete": 2, "iron_bar": 1, "scrap": 2}},
+	{"result": "purifier2", "count": 1, "station": "forge", "requires": "boss_2", "ingredients": {"iron_bar": 6, "copper_bar": 4, "biomass": 4}}
 ]

@@ -4,5 +4,16 @@
 	{"name": "zombie_runner", "title": "Бегун", "hp": 26, "speed": 108, "damage": 8, "size": [14, 28], "color": "#a4b86a", "jump": 500, "break": 0.7, "min_night": 2, "weight": 3,
 		"drops": [{"item": "scrap", "chance": 0.3, "min": 1, "max": 2}, {"item": "coal", "chance": 0.15, "min": 1, "max": 2}]},
 	{"name": "zombie_fat", "title": "Толстяк", "hp": 130, "speed": 34, "damage": 18, "size": [22, 32], "color": "#7a5a6a", "jump": 430, "break": 1.5, "min_night": 3, "weight": 1,
-		"drops": [{"item": "scrap", "chance": 0.7, "min": 2, "max": 4}, {"item": "iron_ore", "chance": 0.3, "min": 1, "max": 3}]}
+		"drops": [{"item": "scrap", "chance": 0.7, "min": 2, "max": 4}, {"item": "iron_ore", "chance": 0.3, "min": 1, "max": 3}]},
+	{"name": "raider", "title": "Мародёр", "hp": 60, "speed": 66, "damage": 12, "size": [14, 30], "color": "#a05a3a", "jump": 470, "break": 0.7, "min_night": 1, "weight": 1, "wave": false,
+		"ranged": true, "shot_damage": 9, "shot_cd": 1.8, "shot_range": 230, "keep": 110,
+		"drops": [{"item": "bullet", "chance": 0.5, "min": 3, "max": 6}, {"item": "scrap", "chance": 0.4, "min": 1, "max": 3}, {"item": "coal", "chance": 0.2, "min": 1, "max": 2}]},
+	{"name": "spore_crawler", "title": "Споровик", "hp": 20, "speed": 95, "damage": 7, "size": [18, 12], "color": "#7fbf4f", "jump": 380, "min_night": 1, "weight": 5, "biomes": [0],
+		"drops": [{"item": "biomass", "chance": 0.5, "min": 1, "max": 2}, {"item": "mud", "chance": 0.3, "min": 1, "max": 2}]},
+	{"name": "boss_raider_chief", "title": "Главарь мародёров", "boss": 1, "hp": 520, "speed": 64, "damage": 16, "size": [18, 34], "color": "#b0432f", "jump": 470, "break": 1.5, "min_night": 99, "weight": 0, "wave": false,
+		"ranged": true, "shot_damage": 10, "shot_cd": 2.2, "shot_range": 300, "keep": 0,
+		"drops": [{"item": "iron_bar", "chance": 1.0, "min": 10, "max": 14}, {"item": "bullet", "chance": 1.0, "min": 20, "max": 30}, {"item": "medkit", "chance": 1.0, "min": 2, "max": 3}]},
+	{"name": "boss_hive_queen", "title": "Королева-матка", "boss": 2, "hp": 700, "speed": 24, "damage": 22, "size": [34, 26], "color": "#8a4f9a", "jump": 300, "min_night": 99, "weight": 0, "wave": false,
+		"ranged": true, "shot_damage": 10, "shot_cd": 2.5, "shot_range": 260, "keep": 0,
+		"drops": [{"item": "biomass", "chance": 1.0, "min": 12, "max": 16}, {"item": "medkit", "chance": 1.0, "min": 2, "max": 3}, {"item": "crystal", "chance": 1.0, "min": 3, "max": 5}]}
 ]

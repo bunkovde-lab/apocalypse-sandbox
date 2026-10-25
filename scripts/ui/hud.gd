@@ -5,6 +5,8 @@ extends CanvasLayer
 var label := Label.new()
 var help := Label.new()
 var panel := Label.new()
+var boss_label := Label.new()
+var boss_bar := ProgressBar.new()
 var hp_bar := ProgressBar.new()
 var hp_text := Label.new()
 var message := Label.new()
@@ -47,12 +49,42 @@ func _init() -> void:
 	panel.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	add_child(panel)
 
+	_style(boss_label)
+	boss_label.add_theme_font_size_override("font_size", 16)
+	boss_label.anchor_left = 0.5
+	boss_label.anchor_right = 0.5
+	boss_label.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	boss_label.position = Vector2(0, 8)
+	boss_label.visible = false
+	add_child(boss_label)
+	boss_bar.anchor_left = 0.5
+	boss_bar.anchor_right = 0.5
+	boss_bar.position = Vector2(-220, 34)
+	boss_bar.size = Vector2(440, 14)
+	boss_bar.custom_minimum_size = Vector2(440, 14)
+	boss_bar.show_percentage = false
+	boss_bar.add_theme_stylebox_override("fill", _flat(Color(0.7, 0.2, 0.55)))
+	boss_bar.add_theme_stylebox_override("background", _flat(Color(0.1, 0.05, 0.1, 0.8)))
+	boss_bar.visible = false
+	add_child(boss_bar)
+
 	_style(help)
 	help.text = "A/D ходьба, Пробел прыжок, ЛКМ копать или бить, ПКМ ставить, 1-0 или колесо выбор ячейки, E использовать (дверь, генератор, кровать), Tab инвентарь и крафт"
 	help.anchor_top = 1.0
 	help.anchor_bottom = 1.0
 	help.position = Vector2(8, -28)
 	add_child(help)
+
+
+## Показывает полоску босса; name = "" прячет её.
+func set_boss(boss_name: String, hp: float, max_hp: float) -> void:
+	var on := boss_name != ""
+	boss_label.visible = on
+	boss_bar.visible = on
+	if on:
+		boss_label.text = boss_name
+		boss_bar.max_value = max_hp
+		boss_bar.value = maxf(hp, 0.0)
 
 
 func set_text(t: String) -> void:
