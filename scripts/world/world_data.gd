@@ -17,6 +17,7 @@ var bg := PackedByteArray()          # стены: 0 = естественная 
 var surface := PackedInt32Array()    # y поверхности в каждой колонке
 var biome := PackedByteArray()       # биом поверхности в каждой колонке
 
+var tombstones := {}                 # Vector2i -> {предмет: количество}, вещи погибшего игрока
 var damage := {}                     # индекс клетки -> накопленный урон
 var dirty_chunks := {}               # Vector2i -> true (для сохранений)
 

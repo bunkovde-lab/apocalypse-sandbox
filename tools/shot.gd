@@ -22,6 +22,14 @@ func _initialize() -> void:
 				if dy > 0:
 					main.world.set_block(x, y, BlockDB.AIR)
 		p.position = Vector2(tx * 16, ty * 16)
+	if OS.get_environment("SHOT_NIGHT") == "1":
+		main.clock.time = 0.8
+		main.enemies.day_spawns = false
+		var px: int = main.player.tile_pos().x
+		for pair in [["zombie_walker", -9], ["zombie_runner", -5], ["zombie_fat", 7], ["zombie_walker", 11]]:
+			main.enemies.spawn_enemy(EnemyDB.defs[pair[0]], px + pair[1], 3)
+		main.player.add_item("iron_sword", 1)
+		main.player.take_damage(35.0, main.player.center().x - 30.0)
 	if OS.get_environment("SHOT_UI") == "1":
 		for item in {"wood": 24, "stone": 40, "scrap": 7, "iron_ore": 9, "coal": 4, "workbench": 1}.keys():
 			main.player.add_item(item, {"wood": 24, "stone": 40, "scrap": 7, "iron_ore": 9, "coal": 4, "workbench": 1}[item])

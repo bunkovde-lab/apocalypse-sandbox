@@ -13,5 +13,6 @@
 	{"id": 11, "name": "wood", "title": "Дерево", "color": "#8a6a3f", "hardness": 0.6, "solid": true, "drop": "wood", "placeable": true},
 	{"id": 12, "name": "bedrock", "title": "Основание", "color": "#2a2a30", "hardness": -1.0, "solid": true, "drop": "", "placeable": false},
 	{"id": 13, "name": "workbench", "title": "Верстак", "color": "#b8873a", "speck": "#4a3318", "hardness": 0.5, "solid": false, "drop": "workbench", "placeable": true, "station": true},
-	{"id": 14, "name": "forge", "title": "Кузница", "color": "#a8442c", "speck": "#f2a33a", "hardness": 0.8, "solid": false, "drop": "forge", "placeable": true, "station": true}
+	{"id": 14, "name": "forge", "title": "Кузница", "color": "#a8442c", "speck": "#f2a33a", "hardness": 0.8, "solid": false, "drop": "forge", "placeable": true, "station": true},
+	{"id": 15, "name": "tombstone", "title": "Надгробие", "color": "#4a4a52", "speck": "#c9c9d0", "hardness": 0.4, "solid": false, "drop": "", "placeable": false}
 ]

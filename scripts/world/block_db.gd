@@ -17,6 +17,7 @@ const WOOD := 11
 const BEDROCK := 12
 const WORKBENCH := 13
 const FORGE := 14
+const TOMBSTONE := 15
 
 static var _loaded := false
 static var count := 0

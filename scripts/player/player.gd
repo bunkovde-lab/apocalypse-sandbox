@@ -1,9 +1,12 @@
 class_name Player
 extends Node2D
 ## Игрок. position = левый верхний угол прямоугольника столкновений.
-## Логика (physics_step, mine_tick, place_block) отделена от чтения ввода, чтобы её можно было тестировать.
+## Логика (physics_step, mine_tick, place_block, try_attack, take_damage) отделена от чтения ввода,
+## чтобы её можно было тестировать без окна.
 
 signal selected_changed
+signal damaged
+signal died
 
 const TILE := 16
 const SIZE := Vector2(14, 30)
@@ -11,10 +14,15 @@ const GRAVITY := 1400.0
 const MOVE_SPEED := 170.0
 const JUMP_SPEED := 520.0
 const MAX_FALL := 700.0
-const REACH := 80.0          # дальность копания и стройки, пиксели (5 блоков)
-const HAND_POWER := 1.0      # урон по блоку в секунду голыми руками
+const REACH := 80.0           # дальность копания и стройки, пиксели (5 блоков)
+const HAND_POWER := 1.0       # урон по блоку в секунду голыми руками
+const MAX_HP := 100.0
+const INVULN_TIME := 0.7
+const REGEN_DELAY := 5.0      # секунд без урона до начала лечения
+const REGEN_RATE := 2.0       # здоровья в секунду
 
 var world: WorldData
+var combat: EnemyManager
 var vel := Vector2.ZERO
 var on_floor := false
 var facing := 1
@@ -25,10 +33,22 @@ var selected := 0:
 		selected = clampi(value, 0, Inventory.HOTBAR - 1)
 		selected_changed.emit()
 
+var max_hp := MAX_HP
+var hp := MAX_HP
+var invuln := 0.0
+var since_damage := 99.0
+var knock_time := 0.0
+var attack_cd := 0.0
+var spawn_pos := Vector2.ZERO
+var swing_time := 0.0         # для отрисовки взмаха
+var deaths := 0
+
 
 func physics_step(delta: float, move_dir: float, jump_pressed: bool) -> void:
 	delta = minf(delta, 0.05)
-	vel.x = move_dir * MOVE_SPEED
+	_tick_timers(delta)
+	if knock_time <= 0.0:
+		vel.x = move_dir * MOVE_SPEED
 	if move_dir != 0.0:
 		facing = 1 if move_dir > 0.0 else -1
 	if jump_pressed and on_floor:
@@ -38,6 +58,16 @@ func physics_step(delta: float, move_dir: float, jump_pressed: bool) -> void:
 	position = r["pos"]
 	vel = r["vel"]
 	on_floor = r["on_floor"]
+
+
+func _tick_timers(delta: float) -> void:
+	invuln = maxf(0.0, invuln - delta)
+	attack_cd = maxf(0.0, attack_cd - delta)
+	knock_time = maxf(0.0, knock_time - delta)
+	swing_time = maxf(0.0, swing_time - delta)
+	since_damage += delta
+	if since_damage >= REGEN_DELAY and hp < max_hp:
+		hp = minf(max_hp, hp + REGEN_RATE * delta)
 
 
 func center() -> Vector2:
@@ -63,6 +93,13 @@ func mine_power() -> float:
 	return maxf(HAND_POWER, ItemDB.tool_power(selected_item()))
 
 
+func is_weapon_selected() -> bool:
+	var k := ItemDB.kind(selected_item())
+	return k == "weapon" or k == "gun"
+
+
+# ---------- Копание и стройка ----------
+
 ## Копает блок. Возвращает true, когда блок разрушен.
 func mine_tick(t: Vector2i, delta: float) -> bool:
 	if not world.in_bounds(t.x, t.y) or not tile_in_reach(t):
@@ -70,6 +107,8 @@ func mine_tick(t: Vector2i, delta: float) -> bool:
 	var id := world.get_block(t.x, t.y)
 	if id == BlockDB.AIR:
 		return false
+	if id == BlockDB.TOMBSTONE:
+		return _mine_tombstone(t, delta)
 	var drop := BlockDB.drops[id]
 	if drop != "" and not inv.can_add(drop, 1):
 		return false   # некуда класть добычу, блок не ломаем
@@ -78,6 +117,22 @@ func mine_tick(t: Vector2i, delta: float) -> bool:
 			inv.add(drop, 1)
 		return true
 	return false
+
+
+func _mine_tombstone(t: Vector2i, delta: float) -> bool:
+	if not world.damage_block(t.x, t.y, mine_power() * delta):
+		return false
+	var loot: Dictionary = world.tombstones.get(t, {})
+	var rest := {}
+	for item in loot:
+		var left := inv.add(item, int(loot[item]))
+		if left > 0:
+			rest[item] = left
+	world.tombstones.erase(t)
+	if not rest.is_empty():
+		world.tombstones[t] = rest        # не всё поместилось: надгробие остаётся с остатком
+		world.set_block(t.x, t.y, BlockDB.TOMBSTONE)
+	return true
 
 
 func place_block(t: Vector2i, item: String) -> bool:
@@ -109,6 +164,87 @@ func place_selected(t: Vector2i) -> bool:
 	return place_block(t, item)
 
 
+# ---------- Бой ----------
+
+## Атакует выбранным оружием в сторону aim (мировые координаты). Возвращает true, если атака произошла.
+func try_attack(aim: Vector2) -> bool:
+	var item := selected_item()
+	var kind := ItemDB.kind(item)
+	if attack_cd > 0.0 or combat == null or hp <= 0.0:
+		return false
+	var dir := 1 if aim.x >= center().x else -1
+	if kind == "weapon":
+		facing = dir
+		attack_cd = ItemDB.stat(item, "cooldown", 0.5)
+		swing_time = 0.12
+		var reach := ItemDB.stat(item, "range", 40.0)
+		var x0 := center().x if dir > 0 else center().x - reach - SIZE.x * 0.5
+		combat.melee_hit(Rect2(x0, center().y - 18.0, reach + SIZE.x * 0.5, 36.0), ItemDB.damage(item), dir)
+		return true
+	if kind == "gun":
+		var ammo := str(ItemDB.items[item].get("ammo", ""))
+		if inv.count(ammo) <= 0:
+			return false
+		inv.remove(ammo, 1)
+		attack_cd = ItemDB.stat(item, "cooldown", 0.4)
+		facing = dir
+		var aim_dir := aim - center()
+		if aim_dir.length() < 1.0:
+			aim_dir = Vector2(dir, 0)
+		combat.fire(center(), aim_dir, ItemDB.damage(item))
+		return true
+	return false
+
+
+## Получить урон. Возвращает true, если урон прошёл (нет неуязвимости).
+func take_damage(amount: float, from_x: float) -> bool:
+	if invuln > 0.0 or hp <= 0.0:
+		return false
+	hp -= amount
+	invuln = INVULN_TIME
+	since_damage = 0.0
+	var dir := 1.0 if center().x >= from_x else -1.0
+	vel = Vector2(dir * 140.0, -200.0)
+	knock_time = 0.15
+	damaged.emit()
+	if hp <= 0.0:
+		die()
+	return true
+
+
+## Смерть: половина каждой стопки остаётся на надгробии, игрок возвращается на точку старта.
+func die() -> void:
+	var lost := {}
+	for i in Inventory.SIZE:
+		var take := inv.counts[i] >> 1
+		if take > 0:
+			var item := inv.items[i]
+			lost[item] = int(lost.get(item, 0)) + take
+			inv.counts[i] -= take
+	inv.changed.emit()
+	if not lost.is_empty():
+		var t := tile_pos()
+		for dy in 7:
+			if world.get_block(t.x, t.y - dy) == BlockDB.AIR:
+				var spot := Vector2i(t.x, t.y - dy)
+				world.tombstones[spot] = lost
+				world.set_block(spot.x, spot.y, BlockDB.TOMBSTONE)
+				break
+	deaths += 1
+	died.emit()
+	respawn()
+
+
+func respawn() -> void:
+	position = spawn_pos
+	vel = Vector2.ZERO
+	hp = max_hp
+	invuln = 2.0
+	since_damage = 99.0
+
+
+# ---------- Инвентарь ----------
+
 func add_item(item: String, n: int) -> int:
 	return inv.add(item, n)
 
@@ -125,6 +261,8 @@ func nearby_stations() -> Dictionary:
 	return RecipeDB.nearby_stations(world, tile_pos())
 
 
+# ---------- Ввод и отрисовка ----------
+
 func _physics_process(delta: float) -> void:
 	if world == null:
 		return
@@ -134,7 +272,10 @@ func _physics_process(delta: float) -> void:
 	var over_ui := get_viewport().gui_get_hovered_control() != null
 	if not over_ui:
 		if Input.is_action_pressed("mine"):
-			mine_tick(target_tile, delta)
+			if is_weapon_selected():
+				try_attack(m)
+			else:
+				mine_tick(target_tile, delta)
 		if Input.is_action_pressed("place"):
 			place_selected(target_tile)
 	queue_redraw()
@@ -151,8 +292,15 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, SIZE), Color("d8c9a0"))
+	var body := Color("d8c9a0")
+	if invuln > 0.0 and int(invuln * 20.0) % 2 == 0:
+		body = Color(1, 1, 1, 0.5)
+	draw_rect(Rect2(Vector2.ZERO, SIZE), body)
 	draw_rect(Rect2(Vector2(SIZE.x * 0.5 + facing * 3.0 - 1.5, 6), Vector2(3, 3)), Color("2a2a30"))
+	if swing_time > 0.0:
+		var reach := ItemDB.stat(selected_item(), "range", 40.0)
+		var x0 := SIZE.x if facing > 0 else -reach
+		draw_rect(Rect2(Vector2(x0, SIZE.y * 0.5 - 6.0), Vector2(reach, 12)), Color(1, 1, 1, 0.35))
 	if world == null:
 		return
 	var origin := Vector2(target_tile.x * TILE, target_tile.y * TILE) - position
