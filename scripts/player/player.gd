@@ -198,6 +198,7 @@ func mine_tick(t: Vector2i, delta: float) -> bool:
 	if drop != "" and not inv.can_add(drop, 1):
 		return false   # некуда класть добычу, блок не ломаем
 	if world.damage_block(t.x, t.y, mine_power() * delta):
+		Sfx.play("break")
 		if drop != "":
 			inv.add(drop, 1)
 		return true
@@ -282,6 +283,7 @@ func place_block(t: Vector2i, item: String) -> bool:
 		return false
 	inv.remove(item, 1)
 	world.set_block(t.x, t.y, id)
+	Sfx.play("place")
 	return true
 
 
@@ -308,6 +310,7 @@ func use_item(item: String) -> bool:
 	if not useful:
 		return false
 	inv.remove(item, 1)
+	Sfx.play("heal")
 	hp = minf(max_hp, hp + heal)
 	rad = maxf(0.0, rad - rad_heal)
 	attack_cd = 0.8
@@ -329,6 +332,7 @@ func try_attack(aim: Vector2) -> bool:
 		swing_time = 0.12
 		var reach := ItemDB.stat(item, "range", 40.0)
 		var x0 := center().x if dir > 0 else center().x - reach - SIZE.x * 0.5
+		Sfx.play("swing")
 		combat.melee_hit(Rect2(x0, center().y - 18.0, reach + SIZE.x * 0.5, 36.0), ItemDB.damage(item), dir)
 		return true
 	if kind == "gun":
@@ -342,6 +346,7 @@ func try_attack(aim: Vector2) -> bool:
 		if aim_dir.length() < 1.0:
 			aim_dir = Vector2(dir, 0)
 		var pellets := int(ItemDB.stat(item, "pellets", 1.0))
+		Sfx.play("shotgun" if pellets > 1 else "shot")
 		var spread := ItemDB.stat(item, "spread", 0.0)
 		for i in pellets:
 			var a := aim_dir.angle() + (i - (pellets - 1) * 0.5) * spread
@@ -362,6 +367,7 @@ func take_damage(amount: float, from_x: float) -> bool:
 	vel = Vector2(dir * 140.0, -200.0)
 	knock_time = 0.15
 	damaged.emit()
+	Sfx.play("hurt")
 	if hp <= 0.0:
 		die()
 	return true

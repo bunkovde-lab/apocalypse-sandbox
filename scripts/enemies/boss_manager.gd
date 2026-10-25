@@ -91,6 +91,7 @@ func summon(info: Dictionary, altar: Vector2i) -> Boss:
 	boss.arena_center = Vector2(altar.x * 16.0 + 8.0, altar.y * 16.0)
 	boss.died.connect(_on_boss_died)
 	boss_changed.emit(str(info["name"]), boss.hp, boss.max_hp)
+	Sfx.play("boss")
 	return boss
 
 
@@ -113,6 +114,7 @@ func _on_boss_died(e: Enemy) -> void:
 			m.take_damage(9999.0, 1)
 	boss_changed.emit("", 0.0, 1.0)
 	message.emit(str(info["win"]))
+	Sfx.play("win")
 	won.emit(str(info["flag"]))
 	boss = null
 	current = {}

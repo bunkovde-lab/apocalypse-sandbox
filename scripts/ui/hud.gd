@@ -94,7 +94,7 @@ func _init() -> void:
 	add_child(boss_bar)
 
 	_style(help)
-	help.text = "A/D ходьба, Пробел прыжок, ЛКМ копать или бить, ПКМ ставить, 1-0 или колесо выбор ячейки, E использовать (дверь, генератор, кровать), Tab инвентарь и крафт"
+	help.text = "A/D ход, Пробел прыжок, ЛКМ копать/бить, ПКМ ставить, E действие, Tab крафт, M карта, Esc пауза"
 	help.anchor_top = 1.0
 	help.anchor_bottom = 1.0
 	help.position = Vector2(8, -28)

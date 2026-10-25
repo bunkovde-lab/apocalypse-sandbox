@@ -58,6 +58,18 @@ func setup(w: WorldData, p: Player, c: EnemyManager) -> void:
 	p.shelter = self
 
 
+## После загрузки мира: заново находит устройства в изменённых чанках.
+func rescan() -> void:
+	devices.clear()
+	for c in world.dirty_chunks:
+		for y in range(c.y * WorldData.CHUNK, mini((c.y + 1) * WorldData.CHUNK, world.height)):
+			for x in range(c.x * WorldData.CHUNK, mini((c.x + 1) * WorldData.CHUNK, world.width)):
+				if BlockDB.device[world.get_block(x, y)] == 1:
+					devices[Vector2i(x, y)] = world.get_block(x, y)
+	recompute_power()
+	evaluate()
+
+
 func _on_block_changed(x: int, y: int) -> void:
 	var pos := Vector2i(x, y)
 	var id := world.get_block(x, y)

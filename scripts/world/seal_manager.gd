@@ -42,6 +42,7 @@ func open_layer(l: Dictionary) -> void:
 	var px := player.tile_pos().x
 	world.open_rows(r.x, r.y, px - 80, px + 80)
 	world.seals_open[l["id"]] = true
+	Sfx.play("seal")
 	opened.emit(str(l["id"]))
 	message.emit("Печать снята: слой «%s» открыт." % l["title"])
 

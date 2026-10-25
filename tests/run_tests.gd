@@ -2,7 +2,7 @@ extends SceneTree
 ## Запуск: tools/test.sh [stage1 stage2 ...]
 ## Каждый файл tests/<stage>_tests.gd содержит метод run(t), где t.check(условие, описание).
 
-const STAGES := ["stage1", "stage2", "stage3", "stage4", "stage5", "stage6", "stage7", "stage8"]
+const STAGES := ["stage1", "stage2", "stage3", "stage4", "stage5", "stage6", "stage7", "stage8", "stage9"]
 
 var checks := 0
 var failures := 0

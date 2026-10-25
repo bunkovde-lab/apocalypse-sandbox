@@ -88,7 +88,7 @@ func line_clear(a: Vector2, b: Vector2) -> bool:
 
 
 func hostile_shot(from: Vector2, dir: Vector2, dmg: float, speed: float = 260.0, color: Color = Color("ff7a4a")) -> Projectile:
-	var p := fire(from, dir, dmg, speed)
+	var p := fire(from, dir, dmg * Settings.damage_mult(), speed)
 	p.hostile = true
 	p.hero = player
 	p.color = color
@@ -99,13 +99,13 @@ func hostile_shot(from: Vector2, dir: Vector2, dmg: float, speed: float = 260.0,
 func _spawn_logic(delta: float) -> void:
 	if clock.is_night():
 		if wave_budget > 0:
-			spawn_timer -= delta * spawn_mult
+			spawn_timer -= delta * spawn_mult * Settings.spawn_mult()
 			if spawn_timer <= 0.0 and enemies.size() < max_alive(wave_night):
 				if spawn_random(wave_night):
 					wave_budget -= 1
 				spawn_timer = maxf(0.6, 2.0 - 0.15 * wave_night)
 	elif day_spawns:
-		day_spawn_timer -= delta * spawn_mult
+		day_spawn_timer -= delta * spawn_mult * Settings.spawn_mult()
 		if day_spawn_timer <= 0.0:
 			day_spawn_timer = 25.0
 			if enemies.size() < 2:
@@ -176,6 +176,7 @@ func _update_projectiles(delta: float) -> void:
 
 func _on_enemy_died(e: Enemy) -> void:
 	kills += 1
+	Sfx.play("kill")
 	for drop in e.def.get("drops", []):
 		if rng.randf() < float(drop["chance"]):
 			player.inv.add(str(drop["item"]), rng.randi_range(int(drop["min"]), int(drop["max"])))

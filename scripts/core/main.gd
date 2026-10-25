@@ -25,6 +25,11 @@ var seals: SealManager
 var layer_spawner: LayerSpawner
 var director: EventDirector
 var ending: Ending
+var pause_menu: PauseMenu
+var minimap: Minimap
+var lights: LightManager
+var sfx: Sfx
+var loaded_data := {}
 var tint: CanvasModulate
 var ready_done := false
 
@@ -38,7 +43,15 @@ func _ready() -> void:
 	await get_tree().process_frame
 
 	var t0 := Time.get_ticks_msec()
-	world = WorldGen.generate(world_seed, world_width, world_height)
+	if Settings.load_requested and SaveSystem.exists():
+		loaded_data = SaveSystem.read()
+	if not loaded_data.is_empty():
+		world = SaveSystem.build_world(loaded_data)
+		world_width = world.width
+		world_height = world.height
+		world_seed = world.seed_value
+	else:
+		world = WorldGen.generate(world_seed, world_width, world_height)
 	print("Мир %dx%d создан за %d мс" % [world_width, world_height, Time.get_ticks_msec() - t0])
 
 	tint = CanvasModulate.new()
@@ -92,9 +105,12 @@ func _ready() -> void:
 	bosses.won.connect(func(flag: String) -> void:
 		if flag == "boss_9":
 			ending.show_choice(ending_stats()))
-	for dx in [-55, 40, 85]:
-		survivors.spawn_stranded(clampi(world.spawn_tile.x + dx, 5, world.width - 6))
-	clock.night_started.connect(func(n: int) -> void: hud.flash_message("Ночь %d. Идёт орда." % n, 3.0))
+	if loaded_data.is_empty():
+		for dx in [-55, 40, 85]:
+			survivors.spawn_stranded(clampi(world.spawn_tile.x + dx, 5, world.width - 6))
+	clock.night_started.connect(func(n: int) -> void:
+		Sfx.play("alarm")
+		hud.flash_message("Ночь %d. Идёт орда." % n, 3.0))
 	clock.dawn.connect(func() -> void: hud.flash_message("Рассвет. Орда отступила.", 3.0))
 	clock.night_warning.connect(func() -> void: hud.flash_message("Скоро ночь: готовьте оборону!", 4.0))
 
@@ -111,8 +127,25 @@ func _ready() -> void:
 	add_child(ui)
 	ui.setup(player)
 
+	sfx = Sfx.new()
+	add_child(sfx)
+	lights = LightManager.new()
+	add_child(lights)
+	lights.setup(world, player)
+	minimap = Minimap.new()
+	hud.add_child(minimap)
+	minimap.setup(world, player)
+	pause_menu = PauseMenu.new()
+	add_child(pause_menu)
+	pause_menu.save_pressed.connect(save_game)
+	pause_menu.quit_pressed.connect(to_menu)
+	if not loaded_data.is_empty():
+		SaveSystem.apply(loaded_data, context())
+		hud.flash_message("Игра загружена.", 2.5)
 	renderer.update_view(player.tile_pos())
 	renderer.flush()
+	minimap.refresh()
+	lights.refresh()
 	ready_done = true
 
 
@@ -125,8 +158,7 @@ func _process(delta: float) -> void:
 	renderer.process_queue(2)
 	var col := clampi(tile.x, 0, world.width - 1)
 	var depth := tile.y - world.surface[col]
-	var underground := clampf(depth / 20.0, 0.0, 1.0)
-	tint.color = clock.tint().lerp(Color.WHITE, underground)
+	tint.color = LightManager.ambient(clock.tint(), depth)
 	var sky := SKY_COLOR.lerp(NIGHT_SKY_COLOR, clock.darkness())
 	RenderingServer.set_default_clear_color(sky.lerp(DARK_COLOR, clampf(depth / 30.0, 0.0, 1.0)))
 	hud.set_hp(player.hp, player.max_hp)
@@ -147,3 +179,36 @@ func _process(delta: float) -> void:
 
 func ending_stats() -> Dictionary:
 	return {"days": clock.day, "kills": enemies.kills, "residents": survivors.residents.size()}
+
+
+func context() -> Dictionary:
+	return {"world": world, "player": player, "clock": clock, "shelter": shelter, "survivors": survivors,
+		"director": director, "minimap": minimap}
+
+
+func save_game() -> bool:
+	var ok := SaveSystem.write(SaveSystem.capture(context()))
+	var text := "Игра сохранена." if ok else "Не удалось сохранить игру."
+	hud.flash_message(text, 2.0)
+	if pause_menu != null:
+		pause_menu.show_status(text)
+	return ok
+
+
+func to_menu() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://scenes/menu.tscn")
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not ready_done or not (event is InputEventKey) or not event.pressed or event.echo:
+		return
+	if ending != null and ending.open:
+		return
+	match event.keycode:
+		KEY_ESCAPE:
+			pause_menu.toggle()
+		KEY_F5:
+			save_game()
+		KEY_M:
+			minimap.toggle_big()

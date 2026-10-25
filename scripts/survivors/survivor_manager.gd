@@ -96,6 +96,7 @@ func rescue(s: Survivor) -> String:
 	var beds := free_beds()
 	if beds.is_empty():
 		return "%s просит койку: поставьте кровать на базе." % s.survivor_name
+	Sfx.play("rescue")
 	_become_resident(s, beds[0])
 	return "%s спасён и стал жителем: %s." % [s.survivor_name, Survivor.ROLE_TITLES[s.role]]
 

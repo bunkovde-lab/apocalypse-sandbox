@@ -115,6 +115,7 @@ func update(delta: float) -> void:
 
 func start(name: String) -> void:
 	active[name] = float(DURATIONS[name])
+	Sfx.play("event")
 	event_started.emit(name)
 	match name:
 		"dust_storm":
