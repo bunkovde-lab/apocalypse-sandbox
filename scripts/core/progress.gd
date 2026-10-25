@@ -4,10 +4,12 @@ extends RefCounted
 ## Флаги вида boss_1..boss_9. Условие может объединять флаги знаком &, например "boss_5&boss_7".
 
 static var flags := {}
+static var ending := ""       # выбранная концовка: shutdown / control
 
 
 static func reset() -> void:
 	flags = {}
+	ending = ""
 
 
 static func unlock(flag: String) -> void:
