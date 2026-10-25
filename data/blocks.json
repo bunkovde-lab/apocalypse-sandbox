@@ -20,5 +20,9 @@
 	{"id": 18, "name": "bed", "title": "Кровать", "color": "#9a3d3d", "speck": "#e8d8c0", "hardness": 0.4, "solid": false, "drop": "bed", "placeable": true, "device": true},
 	{"id": 19, "name": "generator", "title": "Генератор", "color": "#56667a", "speck": "#e8c53a", "hardness": 1.5, "solid": false, "drop": "generator", "placeable": true, "device": true},
 	{"id": 20, "name": "turret", "title": "Турель", "color": "#3d4d3d", "speck": "#ff5050", "hardness": 2.0, "solid": true, "drop": "turret", "placeable": true, "device": true},
-	{"id": 21, "name": "spikes", "title": "Шипы", "color": "#9a9aa0", "speck": "#d8d8e0", "hardness": 0.6, "solid": false, "drop": "spikes", "placeable": true, "device": true}
+	{"id": 21, "name": "spikes", "title": "Шипы", "color": "#9a9aa0", "speck": "#d8d8e0", "hardness": 0.6, "solid": false, "drop": "spikes", "placeable": true, "device": true},
+	{"id": 22, "name": "planter", "title": "Грядка", "color": "#3f7a3a", "speck": "#9bd35a", "hardness": 0.5, "solid": false, "drop": "planter", "placeable": true, "device": true},
+	{"id": 23, "name": "purifier", "title": "Водоочиститель", "color": "#3a6a8a", "speck": "#9fe0ff", "hardness": 1.2, "solid": false, "drop": "purifier", "placeable": true, "device": true},
+	{"id": 24, "name": "crate", "title": "Склад", "color": "#7a5a3a", "speck": "#c9a96a", "hardness": 0.8, "solid": false, "drop": "crate", "placeable": true, "device": true},
+	{"id": 25, "name": "rain_collector", "title": "Сборник дождя", "color": "#4a5a6a", "speck": "#8fd0ff", "hardness": 0.6, "solid": false, "drop": "rain_collector", "placeable": true, "device": true}
 ]

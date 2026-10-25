@@ -18,6 +18,7 @@ var ui: InventoryUI
 var clock := DayClock.new()
 var enemies: EnemyManager
 var shelter: ShelterManager
+var survivors: SurvivorManager
 var tint: CanvasModulate
 var ready_done := false
 
@@ -56,6 +57,12 @@ func _ready() -> void:
 	shelter = ShelterManager.new()
 	add_child(shelter)
 	shelter.setup(world, player, enemies)
+	survivors = SurvivorManager.new()
+	add_child(survivors)
+	survivors.setup(world, player, shelter, clock)
+	survivors.message.connect(func(text: String) -> void: hud.flash_message(text, 3.0))
+	for dx in [-55, 40, 85]:
+		survivors.spawn_stranded(clampi(world.spawn_tile.x + dx, 5, world.width - 6))
 	clock.night_started.connect(func(n: int) -> void: hud.flash_message("Ночь %d. Идёт орда." % n, 3.0))
 	clock.dawn.connect(func() -> void: hud.flash_message("Рассвет. Орда отступила.", 3.0))
 
@@ -91,6 +98,7 @@ func _process(delta: float) -> void:
 	var sky := SKY_COLOR.lerp(NIGHT_SKY_COLOR, clock.darkness())
 	RenderingServer.set_default_clear_color(sky.lerp(DARK_COLOR, clampf(depth / 30.0, 0.0, 1.0)))
 	hud.set_hp(player.hp, player.max_hp)
+	hud.panel.text = shelter.panel_text()
 	hud.set_text("День %d, %s%s   FPS %d\nx %d  y %d  глубина %d   убито %d" % [
 		clock.day, clock.clock_text(), " (ночь)" if clock.is_night() else "",
 		Engine.get_frames_per_second(), tile.x, tile.y, depth, enemies.kills])

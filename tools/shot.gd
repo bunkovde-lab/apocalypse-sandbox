@@ -52,7 +52,21 @@ func _initialize() -> void:
 		main.world.set_block(px + 6, gy - 1, BlockDB.GENERATOR)
 		main.world.set_block(px + 8, gy - 1, BlockDB.TURRET)
 		main.world.set_block(px + 12, gy - 1, BlockDB.SPIKES)
+		main.world.set_block(px + 3, gy - 1, BlockDB.BED)
+		main.world.set_block(px + 5, gy - 1, BlockDB.PLANTER)
+		main.world.set_block(px + 7, gy - 1, BlockDB.PURIFIER)
+		main.world.set_block(px + 9, gy - 1, BlockDB.CRATE)
 		main.shelter.fuel[Vector2i(px + 6, gy - 1)] = 300.0
+		for i in 2:
+			var sv: Survivor = main.survivors.stranded[0]
+			sv.position = Vector2((px + 4) * 16, (gy - 3) * 16)
+			main.survivors.rescue(sv)
+		main.survivors.residents[0].role = "farmer"
+		main.survivors.residents[1].role = "engineer"
+		main.shelter.recompute_power()
+		for _i in 400:
+			main.survivors.update(0.05)
+			main.shelter.update(0.05)
 		main.shelter.recompute_power()
 		main.player.position = Vector2((px + 3) * 16, (gy - 3) * 16)
 		main.player.spawn_pos = main.player.position

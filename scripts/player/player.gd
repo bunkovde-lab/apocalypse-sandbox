@@ -45,13 +45,16 @@ var attack_cd := 0.0
 var spawn_pos := Vector2.ZERO
 var swing_time := 0.0         # для отрисовки взмаха
 var deaths := 0
+var home_state := 0           # 1 = бафф «Дом» (стабильность 80+), -1 = «Тревога» (кризис)
+var survivors: SurvivorManager
+var mouse_world := Vector2.ZERO
 
 
 func physics_step(delta: float, move_dir: float, jump_pressed: bool) -> void:
 	delta = minf(delta, 0.05)
 	_tick_timers(delta)
 	if knock_time <= 0.0:
-		vel.x = move_dir * MOVE_SPEED
+		vel.x = move_dir * MOVE_SPEED * (1.1 if home_state > 0 else 1.0)
 	if move_dir != 0.0:
 		facing = 1 if move_dir > 0.0 else -1
 	if jump_pressed and on_floor:
@@ -70,7 +73,7 @@ func _tick_timers(delta: float) -> void:
 	swing_time = maxf(0.0, swing_time - delta)
 	since_damage += delta
 	if since_damage >= REGEN_DELAY and hp < max_hp:
-		hp = minf(max_hp, hp + REGEN_RATE * delta)
+		hp = minf(max_hp, hp + REGEN_RATE * (2.0 if home_state > 0 else (0.5 if home_state < 0 else 1.0)) * delta)
 
 
 func center() -> Vector2:
@@ -313,6 +316,7 @@ func _physics_process(delta: float) -> void:
 		return
 	physics_step(delta, Input.get_axis("move_left", "move_right"), Input.is_action_pressed("jump"))
 	var m := get_global_mouse_position()
+	mouse_world = m
 	target_tile = Vector2i(floori(m.x / TILE), floori(m.y / TILE))
 	var over_ui := get_viewport().gui_get_hovered_control() != null
 	if not over_ui:
@@ -330,7 +334,9 @@ func _physics_process(delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("interact") and shelter != null:
-		var msg := shelter.interact(target_tile, self)
+		var msg := survivors.interact_at(mouse_world, self) if survivors != null else ""
+		if msg == "":
+			msg = shelter.interact(target_tile, self)
 		if msg != "":
 			message.emit(msg)
 	for i in Inventory.HOTBAR:

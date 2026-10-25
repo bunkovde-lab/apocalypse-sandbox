@@ -24,6 +24,10 @@ const BED := 18
 const GENERATOR := 19
 const TURRET := 20
 const SPIKES := 21
+const PLANTER := 22
+const PURIFIER := 23
+const CRATE := 24
+const RAIN_COLLECTOR := 25
 
 static var _loaded := false
 static var count := 0

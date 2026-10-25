@@ -4,6 +4,7 @@ extends CanvasLayer
 
 var label := Label.new()
 var help := Label.new()
+var panel := Label.new()
 var hp_bar := ProgressBar.new()
 var hp_text := Label.new()
 var message := Label.new()
@@ -36,6 +37,15 @@ func _init() -> void:
 	message.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	message.visible = false
 	add_child(message)
+
+	_style(panel)
+	panel.anchor_left = 1.0
+	panel.anchor_right = 1.0
+	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	panel.position = Vector2(-8, 6)
+	panel.add_theme_font_size_override("font_size", 14)
+	panel.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	add_child(panel)
 
 	_style(help)
 	help.text = "A/D ходьба, Пробел прыжок, ЛКМ копать или бить, ПКМ ставить, 1-0 или колесо выбор ячейки, E использовать (дверь, генератор, кровать), Tab инвентарь и крафт"

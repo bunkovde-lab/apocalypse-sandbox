@@ -7,6 +7,7 @@ const TILE := 16
 const POWER_RANGE := 12            # блоков от генератора до потребителя
 const GEN_CAPACITY := 12.0
 const TURRET_DRAW := 4.0
+const DAY_LENGTH := 480.0
 const FUEL_PER_COAL := 120.0       # секунд работы от одного угля
 const FUEL_MAX := 600.0
 const TURRET_RANGE := 176.0
@@ -26,6 +27,27 @@ var powered := {}       # Vector2i турели -> есть ли энергия
 var gen_load := {}      # Vector2i генератора -> нагрузка
 var tracers: Array = [] # [от, до, время жизни]
 var power_timer := 0.0
+
+# --- экономика и стабильность ---
+var survivors: SurvivorManager
+var manned := {}                 # Vector2i станции -> true, пока у неё работает житель
+var reserve_food := 0.0
+var reserve_water := 0.0
+var prod_food := 0.0
+var prod_water := 0.0
+var cons_food := 0.0
+var cons_water := 0.0
+var capacity := 0.0
+var k_food := 1.0
+var k_water := 1.0
+var k_def := 0.0
+var k_com := 0.0
+var stability := 0.0
+var state := Stability.NORMAL
+var beds_total := 0
+var base_room_ok := false
+var eval_timer := 0.0
+var guards := 0
 
 
 func setup(w: WorldData, p: Player, c: EnemyManager) -> void:
@@ -63,7 +85,8 @@ func recompute_power() -> void:
 	powered.clear()
 	gen_load.clear()
 	for p in devices:
-		if devices[p] != BlockDB.TURRET:
+		var draw := draw_of(devices[p])
+		if draw <= 0.0:
 			continue
 		powered[p] = false
 		for g in devices:
@@ -72,10 +95,19 @@ func recompute_power() -> void:
 			if absi(g.x - p.x) > POWER_RANGE or absi(g.y - p.y) > POWER_RANGE:
 				continue
 			var used: float = gen_load.get(g, 0.0)
-			if used + TURRET_DRAW <= GEN_CAPACITY:
-				gen_load[g] = used + TURRET_DRAW
+			if used + draw <= GEN_CAPACITY:
+				gen_load[g] = used + draw
 				powered[p] = true
 				break
+
+
+## Потребление энергии устройством (0 — не потребитель).
+static func draw_of(id: int) -> float:
+	match id:
+		BlockDB.TURRET: return TURRET_DRAW
+		BlockDB.PLANTER: return 2.0
+		BlockDB.PURIFIER: return 4.0
+	return 0.0
 
 
 func is_powered(pos: Vector2i) -> bool:
@@ -96,6 +128,7 @@ func update(delta: float) -> void:
 		fuel[g] = maxf(0.0, left)
 		if left <= 0.0:
 			power_timer = 0.0
+	economy_step(delta)
 	for i in range(tracers.size() - 1, -1, -1):
 		tracers[i][2] -= delta
 		if tracers[i][2] <= 0.0:
@@ -149,6 +182,102 @@ func _spikes_hit(pos: Vector2i) -> void:
 			hit = true
 	if hit:
 		cooldowns[pos] = SPIKE_COOLDOWN
+
+
+# ---------- Еда, вода, стабильность ----------
+
+func work_mult() -> float:
+	return Stability.work_mult(state)
+
+
+func resident_count() -> int:
+	return survivors.residents.size() if survivors != null else 0
+
+
+func sky_open(x: int, y: int) -> bool:
+	for yy in range(y - 1, -1, -1):
+		if world.is_solid(x, yy):
+			return false
+	return true
+
+
+## Пересчитывает производство, ёмкость склада и стабильность по текущему состоянию мира.
+func evaluate() -> void:
+	prod_food = 0.0
+	prod_water = 0.0
+	var crates := 0
+	beds_total = 0
+	var turrets_on := 0
+	var wm := work_mult()
+	for p in devices:
+		match devices[p]:
+			BlockDB.PLANTER:
+				var rate := Balance.g("planter_lit") if is_powered(p) else Balance.g("planter_unlit")
+				prod_food += rate * (Balance.g("manned_mult") * wm if manned.has(p) else 1.0)
+			BlockDB.PURIFIER:
+				if is_powered(p):
+					prod_water += Balance.g("purifier_power") * (Balance.g("manned_mult") * wm if manned.has(p) else 1.0)
+			BlockDB.RAIN_COLLECTOR:
+				if sky_open(p.x, p.y):
+					prod_water += Balance.g("rain_collector")
+			BlockDB.CRATE:
+				crates += 1
+			BlockDB.BED:
+				beds_total += 1
+			BlockDB.TURRET:
+				if is_powered(p):
+					turrets_on += 1
+	capacity = crates * Balance.g("crate_capacity")
+	reserve_food = minf(reserve_food, capacity)
+	reserve_water = minf(reserve_water, capacity)
+	var n := resident_count()
+	cons_food = n * Balance.g("food_per_resident")
+	cons_water = n * Balance.g("water_per_resident")
+	k_food = Stability.coverage(prod_food, reserve_food, cons_food)
+	k_water = Stability.coverage(prod_water, reserve_water, cons_water)
+	# оборона: турели, замкнутая комната с кроватью, охрана — против ожидаемой волны
+	base_room_ok = false
+	for p in devices:
+		if devices[p] == BlockDB.BED and room_at(p)["enclosed"]:
+			base_room_ok = true
+			break
+	var def_power := turrets_on * Balance.g("turret_defense") + guards * Balance.g("guard_defense")
+	if base_room_ok:
+		def_power += Balance.g("room_defense")
+	k_def = clampf(def_power / expected_wave(), 0.0, 1.0)
+	# комфорт: койки на всех, замкнутая комната, свет (работающий генератор)
+	var bed_share := 1.0 if n == 0 else minf(1.0, float(beds_total) / n)
+	k_com = 0.5 * bed_share + (0.3 if base_room_ok else 0.0) + (0.2 if not gen_load.is_empty() else 0.0)
+	stability = Stability.compute(k_food, k_water, k_def, k_com)
+	state = Stability.state_of(stability)
+	if player != null:
+		player.home_state = 1 if state == Stability.PROSPERITY else (-1 if state == Stability.CRISIS else 0)
+
+
+func expected_wave() -> float:
+	var night := 1
+	if combat != null and combat.clock != null:
+		night = combat.clock.day
+	return maxf(1.0, EnemyManager.wave_size(night) * Balance.g("wave_strength_per_enemy"))
+
+
+## Сдвигает запасы еды и воды на delta секунд.
+func economy_step(delta: float) -> void:
+	eval_timer -= delta
+	if eval_timer <= 0.0:
+		eval_timer = 1.0
+		evaluate()
+	var dt := delta / DAY_LENGTH
+	reserve_food = clampf(reserve_food + (prod_food - cons_food) * dt, 0.0, capacity)
+	reserve_water = clampf(reserve_water + (prod_water - cons_water) * dt, 0.0, capacity)
+
+
+func panel_text() -> String:
+	return "УБЕЖИЩЕ  стабильность %d (%s)\nЖители %d/%d  койки %d\nЕда %+.1f/сут  запас %d\nВода %+.1f/сут  запас %d\nОборона %d%%  комфорт %d%%" % [
+		int(stability), Stability.state_title(state), resident_count(),
+		survivors.resident_cap if survivors != null else 0, beds_total,
+		prod_food - cons_food, int(reserve_food), prod_water - cons_water, int(reserve_water),
+		int(k_def * 100.0), int(k_com * 100.0)]
 
 
 # ---------- Взаимодействие (клавиша E) ----------
@@ -265,6 +394,8 @@ func _draw() -> void:
 		var c := _tile_center(pos)
 		if id == BlockDB.TURRET:
 			draw_circle(c + Vector2(0, -2), 2.5, Color(0.3, 1.0, 0.4) if is_powered(pos) else Color(0.9, 0.2, 0.2))
+		elif id == BlockDB.PLANTER or id == BlockDB.PURIFIER:
+			draw_circle(c + Vector2(0, -4), 2.0, Color(0.3, 1.0, 0.4) if is_powered(pos) else Color(0.5, 0.5, 0.5))
 		elif id == BlockDB.GENERATOR:
 			var on := gen_load.has(pos)
 			draw_circle(c + Vector2(0, -2), 2.5, Color(1.0, 0.85, 0.2) if on else Color(0.4, 0.4, 0.4))
