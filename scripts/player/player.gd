@@ -7,6 +7,7 @@ extends Node2D
 signal selected_changed
 signal damaged
 signal died
+signal message(text: String)
 
 const TILE := 16
 const SIZE := Vector2(14, 30)
@@ -20,9 +21,11 @@ const MAX_HP := 100.0
 const INVULN_TIME := 0.7
 const REGEN_DELAY := 5.0      # секунд без урона до начала лечения
 const REGEN_RATE := 2.0       # здоровья в секунду
+const HAMMER_REPAIR := 2.0    # прочности блока в секунду
 
 var world: WorldData
 var combat: EnemyManager
+var shelter: ShelterManager
 var vel := Vector2.ZERO
 var on_floor := false
 var facing := 1
@@ -135,9 +138,51 @@ func _mine_tombstone(t: Vector2i, delta: float) -> bool:
 	return true
 
 
+func is_hammer_selected() -> bool:
+	return ItemDB.stat(selected_item(), "hammer") > 0.0
+
+
+## Молоток: чинит повреждённый блок, иначе снимает поставленную стену (возвращает её в инвентарь).
+## Возвращает "repair", "wall" или "".
+func hammer_tick(t: Vector2i, delta: float) -> String:
+	if not world.in_bounds(t.x, t.y) or not tile_in_reach(t):
+		return ""
+	if world.damage_fraction(t.x, t.y) > 0.0:
+		world.repair_block(t.x, t.y, HAMMER_REPAIR * delta)
+		return "repair"
+	if attack_cd > 0.0 or not world.has_placed_wall(t.x, t.y):
+		return ""
+	var item := ItemDB.wall_item_for(world.bg[t.y * world.width + t.x])
+	if item != "" and not inv.can_add(item, 1):
+		return ""
+	if item != "":
+		inv.add(item, 1)
+	world.set_bg(t.x, t.y, 0)
+	attack_cd = 0.15
+	return "wall"
+
+
+func _place_wall(t: Vector2i, item: String, wall: int) -> bool:
+	if world.get_bg(t.x, t.y) != 0 or inv.count(item) <= 0:
+		return false
+	var supported := world.is_solid(t.x, t.y) \
+		or world.is_solid(t.x - 1, t.y) or world.is_solid(t.x + 1, t.y) \
+		or world.is_solid(t.x, t.y - 1) or world.is_solid(t.x, t.y + 1) \
+		or world.get_bg(t.x - 1, t.y) != 0 or world.get_bg(t.x + 1, t.y) != 0 \
+		or world.get_bg(t.x, t.y - 1) != 0 or world.get_bg(t.x, t.y + 1) != 0
+	if not supported:
+		return false
+	inv.remove(item, 1)
+	world.set_bg(t.x, t.y, wall)
+	return true
+
+
 func place_block(t: Vector2i, item: String) -> bool:
 	if not world.in_bounds(t.x, t.y) or not tile_in_reach(t):
 		return false
+	var wall := ItemDB.wall_id(item)
+	if wall >= 0:
+		return _place_wall(t, item, wall)
 	if world.get_block(t.x, t.y) != BlockDB.AIR:
 		return false
 	if inv.count(item) <= 0:
@@ -272,7 +317,9 @@ func _physics_process(delta: float) -> void:
 	var over_ui := get_viewport().gui_get_hovered_control() != null
 	if not over_ui:
 		if Input.is_action_pressed("mine"):
-			if is_weapon_selected():
+			if is_hammer_selected():
+				hammer_tick(target_tile, delta)
+			elif is_weapon_selected():
 				try_attack(m)
 			else:
 				mine_tick(target_tile, delta)
@@ -282,6 +329,10 @@ func _physics_process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("interact") and shelter != null:
+		var msg := shelter.interact(target_tile, self)
+		if msg != "":
+			message.emit(msg)
 	for i in Inventory.HOTBAR:
 		if event.is_action_pressed("hotbar_%d" % (i + 1)):
 			selected = i

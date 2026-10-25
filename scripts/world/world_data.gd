@@ -99,6 +99,29 @@ func damage_block(x: int, y: int, amount: float) -> bool:
 	return false
 
 
+## Лечит блок (молоток). Возвращает true, если блок полностью восстановлен.
+func repair_block(x: int, y: int, amount: float) -> bool:
+	if not in_bounds(x, y):
+		return false
+	var idx := y * width + x
+	if not damage.has(idx):
+		return false
+	var left: float = float(damage[idx]) - amount
+	if left <= 0.0:
+		damage.erase(idx)
+		return true
+	damage[idx] = left
+	return false
+
+
+## true, если на клетке стена, поставленная игроком (а не естественная).
+func has_placed_wall(x: int, y: int) -> bool:
+	if not in_bounds(x, y):
+		return false
+	var v := bg[y * width + x]
+	return v != 0 and v != 255
+
+
 func damage_fraction(x: int, y: int) -> float:
 	if not in_bounds(x, y):
 		return 0.0

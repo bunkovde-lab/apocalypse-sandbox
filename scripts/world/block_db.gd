@@ -18,6 +18,12 @@ const BEDROCK := 12
 const WORKBENCH := 13
 const FORGE := 14
 const TOMBSTONE := 15
+const DOOR := 16
+const DOOR_OPEN := 17
+const BED := 18
+const GENERATOR := 19
+const TURRET := 20
+const SPIKES := 21
 
 static var _loaded := false
 static var count := 0
@@ -30,6 +36,8 @@ static var hardness := PackedFloat32Array()
 static var solid := PackedByteArray()
 static var placeable := PackedByteArray()
 static var station := PackedByteArray()      # 1 = станция крафта
+static var device := PackedByteArray()       # 1 = устройство убежища (следит ShelterManager)
+static var mob_breakable := PackedByteArray()  # 1 = мобы могут грызть (постройки, не природа)
 static var name_to_id := {}
 
 
@@ -49,6 +57,8 @@ static func ensure_loaded() -> void:
 	solid.resize(count)
 	placeable.resize(count)
 	station.resize(count)
+	device.resize(count)
+	mob_breakable.resize(count)
 	for entry in data:
 		var id: int = int(entry["id"])
 		assert(id >= 0 and id < count, "id блока должны идти подряд с 0")
@@ -62,6 +72,8 @@ static func ensure_loaded() -> void:
 		solid[id] = 1 if bool(entry["solid"]) else 0
 		placeable[id] = 1 if bool(entry["placeable"]) else 0
 		station[id] = 1 if bool(entry.get("station", false)) else 0
+		device[id] = 1 if bool(entry.get("device", false)) else 0
+		mob_breakable[id] = 1 if bool(entry.get("mob_breakable", false)) else 0
 		name_to_id[names[id]] = id
 	_loaded = true
 

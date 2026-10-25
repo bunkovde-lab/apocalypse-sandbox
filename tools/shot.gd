@@ -30,6 +30,32 @@ func _initialize() -> void:
 			main.enemies.spawn_enemy(EnemyDB.defs[pair[0]], px + pair[1], 3)
 		main.player.add_item("iron_sword", 1)
 		main.player.take_damage(35.0, main.player.center().x - 30.0)
+	if OS.get_environment("SHOT_BASE") == "1":
+		var px: int = main.player.tile_pos().x + 3
+		var gy: int = main.world.surface[px]
+		for x in range(px - 1, px + 12):
+			main.world.set_block(x, gy - 1, BlockDB.AIR)
+		for x in range(px, px + 11):
+			for y in range(gy - 5, gy):
+				main.world.set_block(x, y, BlockDB.AIR)
+			main.world.set_block(x, gy - 5, BlockDB.CONCRETE)
+			main.world.set_bg(x, gy - 1, BlockDB.WOOD)
+			for y in range(gy - 4, gy):
+				main.world.set_bg(x, y, BlockDB.SCRAP)
+		for y in range(gy - 5, gy):
+			main.world.set_block(px, y, BlockDB.CONCRETE)
+			main.world.set_block(px + 10, y, BlockDB.CONCRETE)
+		main.world.set_block(px + 10, gy - 1, BlockDB.DOOR)
+		main.world.set_block(px + 10, gy - 2, BlockDB.DOOR)
+		main.world.set_block(px + 2, gy - 1, BlockDB.BED)
+		main.world.set_block(px + 4, gy - 1, BlockDB.WORKBENCH)
+		main.world.set_block(px + 6, gy - 1, BlockDB.GENERATOR)
+		main.world.set_block(px + 8, gy - 1, BlockDB.TURRET)
+		main.world.set_block(px + 12, gy - 1, BlockDB.SPIKES)
+		main.shelter.fuel[Vector2i(px + 6, gy - 1)] = 300.0
+		main.shelter.recompute_power()
+		main.player.position = Vector2((px + 3) * 16, (gy - 3) * 16)
+		main.player.spawn_pos = main.player.position
 	if OS.get_environment("SHOT_UI") == "1":
 		for item in {"wood": 24, "stone": 40, "scrap": 7, "iron_ore": 9, "coal": 4, "workbench": 1}.keys():
 			main.player.add_item(item, {"wood": 24, "stone": 40, "scrap": 7, "iron_ore": 9, "coal": 4, "workbench": 1}[item])

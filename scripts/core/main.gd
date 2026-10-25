@@ -17,6 +17,7 @@ var hud: Hud
 var ui: InventoryUI
 var clock := DayClock.new()
 var enemies: EnemyManager
+var shelter: ShelterManager
 var tint: CanvasModulate
 var ready_done := false
 
@@ -46,10 +47,15 @@ func _ready() -> void:
 	player.died.connect(func() -> void:
 		hud.flash_message("Вы погибли. Половина вещей осталась на надгробии.", 4.0))
 
+	player.message.connect(func(text: String) -> void: hud.flash_message(text, 2.5))
+
 	enemies = EnemyManager.new()
 	add_child(enemies)
 	add_child(player)
 	enemies.setup(world, player, clock)
+	shelter = ShelterManager.new()
+	add_child(shelter)
+	shelter.setup(world, player, enemies)
 	clock.night_started.connect(func(n: int) -> void: hud.flash_message("Ночь %d. Идёт орда." % n, 3.0))
 	clock.dawn.connect(func() -> void: hud.flash_message("Рассвет. Орда отступила.", 3.0))
 

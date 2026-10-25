@@ -47,6 +47,21 @@ static func block_id(item: String) -> int:
 	return id
 
 
+## id блока, из которого сделана стена, если предмет является стеной, иначе -1.
+static func wall_id(item: String) -> int:
+	if kind(item) != "wall":
+		return -1
+	return BlockDB.name_to_id.get(str(items[item]["block"]), -1)
+
+
+## Предмет-стена, соответствующий блоку (для возврата стены при разборе молотком).
+static func wall_item_for(block: int) -> String:
+	for k in items:
+		if kind(k) == "wall" and wall_id(k) == block:
+			return k
+	return ""
+
+
 static func tool_power(item: String) -> float:
 	return float(items[item].get("power", 0.0)) if items.has(item) else 0.0
 

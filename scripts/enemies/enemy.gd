@@ -9,6 +9,7 @@ const GRAVITY := 1400.0
 const MAX_FALL := 700.0
 const AGGRO_RANGE := 260.0       # днём враг замечает игрока с такого расстояния
 const ATTACK_COOLDOWN := 0.8
+const BREAK_RATE := 0.5          # урон по блоку в секунду (блок ломается, если его прочность <= break_max)
 
 var def: Dictionary
 var world: WorldData
@@ -17,6 +18,7 @@ var hp := 1.0
 var damage := 1.0
 var speed := 50.0
 var jump_speed := 470.0
+var break_max := 0.0             # самый прочный блок, который враг может сгрызть
 var size := Vector2(14, 30)
 var color := Color.WHITE
 
@@ -40,6 +42,7 @@ func setup(d: Dictionary, w: WorldData, night: int = 1) -> void:
 	damage = float(d["damage"]) * (1.0 + 0.1 * (night - 1))
 	speed = float(d["speed"])
 	jump_speed = float(d.get("jump", 470.0))
+	break_max = float(d.get("break", 0.0))
 	size = Vector2(d["size"][0], d["size"][1])
 	color = Color.html(str(d["color"]))
 
@@ -86,8 +89,26 @@ func update(delta: float, target: Rect2, horde: bool) -> bool:
 	vel = r["vel"]
 	on_floor = r["on_floor"]
 	hit_wall = r["hit_wall"]
+	if hit_wall and move_dir != 0.0 and break_max > 0.0:
+		gnaw(delta)
 	queue_redraw()
 	return rect().grow(2.0).intersects(target)
+
+
+## Грызёт слабый блок перед собой (самый нижний твёрдый на высоте тела). Возвращает true, если блок разрушен.
+func gnaw(delta: float) -> bool:
+	var fx := floori((position.x + (size.x + 1.0 if facing > 0 else -1.0)) / TILE)
+	var foot := floori((position.y + size.y - 1.0) / TILE)
+	var head := floori(position.y / TILE)
+	for ty in range(foot, head - 1, -1):
+		if not world.is_solid(fx, ty):
+			continue
+		var id := world.get_block(fx, ty)
+		var h := BlockDB.hardness[id]
+		if h < 0.0 or h > break_max or BlockDB.mob_breakable[id] == 0:
+			return false
+		return world.damage_block(fx, ty, BREAK_RATE * delta)
+	return false
 
 
 ## Получить урон. dir = направление удара (1 вправо, -1 влево). Возвращает true, если враг погиб.

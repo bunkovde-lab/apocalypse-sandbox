@@ -13,6 +13,7 @@ static func register() -> void:
 		_key("hotbar_%d" % (i + 1), [KEY_0 if i == 9 else KEY_1 + i])
 	_mouse("hotbar_next", MOUSE_BUTTON_WHEEL_DOWN)
 	_mouse("hotbar_prev", MOUSE_BUTTON_WHEEL_UP)
+	_key("interact", [KEY_E])
 	_key("toggle_inventory", [KEY_TAB, KEY_I])
 
 

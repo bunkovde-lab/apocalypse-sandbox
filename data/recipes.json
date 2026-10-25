@@ -9,5 +9,14 @@
 	{"result": "iron_pick", "count": 1, "station": "forge", "ingredients": {"iron_bar": 8, "wood": 2}},
 	{"result": "iron_sword", "count": 1, "station": "forge", "ingredients": {"iron_bar": 6, "wood": 2}},
 	{"result": "pistol", "count": 1, "station": "forge", "ingredients": {"iron_bar": 8, "copper_bar": 4}},
-	{"result": "bullet", "count": 10, "station": "forge", "ingredients": {"copper_bar": 1, "coal": 1}}
+	{"result": "bullet", "count": 10, "station": "forge", "ingredients": {"copper_bar": 1, "coal": 1}},
+	{"result": "door", "count": 1, "station": "workbench", "ingredients": {"wood": 6}},
+	{"result": "bed", "count": 1, "station": "workbench", "ingredients": {"wood": 10, "scrap": 2}},
+	{"result": "hammer", "count": 1, "station": "workbench", "ingredients": {"wood": 4, "scrap": 2}},
+	{"result": "wall_wood", "count": 4, "station": "", "ingredients": {"wood": 1}},
+	{"result": "wall_concrete", "count": 4, "station": "workbench", "ingredients": {"concrete": 1}},
+	{"result": "wall_scrap", "count": 4, "station": "workbench", "ingredients": {"scrap": 1}},
+	{"result": "spikes", "count": 2, "station": "forge", "ingredients": {"iron_bar": 1, "scrap": 1}},
+	{"result": "generator", "count": 1, "station": "forge", "ingredients": {"iron_bar": 6, "copper_bar": 4, "scrap": 6}},
+	{"result": "turret", "count": 1, "station": "forge", "ingredients": {"iron_bar": 8, "copper_bar": 4, "scrap": 4}}
 ]
