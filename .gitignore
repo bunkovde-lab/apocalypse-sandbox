@@ -6,3 +6,4 @@ mono_crash.*
 .mono/
 data_*/
 *.tmp
+build/

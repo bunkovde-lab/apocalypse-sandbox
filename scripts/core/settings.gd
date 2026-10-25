@@ -11,6 +11,8 @@ static var difficulty := 1
 static var load_requested := false
 static var sound_on := true
 static var volume := 0.7
+static var touch_place := false     # сенсорный режим: касание ставит блок вместо копания
+static var force_touch := false
 
 
 static func hp_mult() -> float:

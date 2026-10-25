@@ -26,6 +26,7 @@ var layer_spawner: LayerSpawner
 var director: EventDirector
 var ending: Ending
 var pause_menu: PauseMenu
+var touch: TouchControls
 var minimap: Minimap
 var lights: LightManager
 var sfx: Sfx
@@ -135,6 +136,11 @@ func _ready() -> void:
 	minimap = Minimap.new()
 	hud.add_child(minimap)
 	minimap.setup(world, player)
+	touch = TouchControls.new()
+	add_child(touch)
+	touch.setup(Settings.force_touch)
+	touch.pause_pressed.connect(func() -> void: pause_menu.toggle())
+	touch.map_pressed.connect(func() -> void: minimap.toggle_big())
 	pause_menu = PauseMenu.new()
 	add_child(pause_menu)
 	pause_menu.save_pressed.connect(save_game)

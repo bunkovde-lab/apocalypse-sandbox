@@ -12,6 +12,7 @@ func run(t) -> void:
 	await _test_minimap(t)
 	await _test_save_load(t)
 	await _test_menus(t)
+	await _test_touch(t)
 	_test_difficulty_balance(t)
 	Settings.difficulty = 1
 	Settings.load_requested = false
@@ -297,3 +298,62 @@ func _test_difficulty_balance(t) -> void:
 	t.check(times[2] < 600.0, "даже на тяжёлой бой укладывается в 10 минут")
 	Settings.difficulty = 1
 	Progress.reset()
+
+
+func _touch(tc: TouchControls, idx: int, pos: Vector2, pressed: bool) -> void:
+	var ev := InputEventScreenTouch.new()
+	ev.index = idx
+	ev.position = pos
+	ev.pressed = pressed
+	tc._input(ev)
+
+
+func _test_touch(t) -> void:
+	InputSetup.register()
+	var tc := TouchControls.new()
+	t.root.add_child(tc)
+	tc.setup(true)
+	await t.process_frame
+	t.check(tc.visible and tc.buttons.size() == TouchControls.SPECS.size(), "экранные кнопки созданы (%d)" % tc.buttons.size())
+	var right: Rect2 = Rect2(tc.buttons["right"].position, tc.buttons["right"].size)
+	var jump: Rect2 = Rect2(tc.buttons["jump"].position, tc.buttons["jump"].size)
+	_touch(tc, 0, right.get_center(), true)
+	t.check(Input.is_action_pressed("move_right") and not Input.is_action_pressed("move_left"), "кнопка ▶ идёт вправо")
+	_touch(tc, 1, jump.get_center(), true)
+	t.check(Input.is_action_pressed("jump") and Input.is_action_pressed("move_right"), "мультитач: идём и прыгаем одновременно")
+	_touch(tc, 0, right.get_center(), false)
+	t.check(not Input.is_action_pressed("move_right") and Input.is_action_pressed("jump"), "отпускание одного пальца не трогает другой")
+	_touch(tc, 1, jump.get_center(), false)
+	t.check(not Input.is_action_pressed("jump"), "всё отпущено")
+	# палец скользит с кнопки на кнопку
+	var left: Rect2 = Rect2(tc.buttons["left"].position, tc.buttons["left"].size)
+	_touch(tc, 2, left.get_center(), true)
+	var drag := InputEventScreenDrag.new()
+	drag.index = 2
+	drag.position = right.get_center()
+	tc._input(drag)
+	t.check(Input.is_action_pressed("move_right") and not Input.is_action_pressed("move_left"), "скольжение пальца переключает направление")
+	_touch(tc, 2, right.get_center(), false)
+	Settings.touch_place = false
+	var mode: Rect2 = Rect2(tc.buttons["mode"].position, tc.buttons["mode"].size)
+	_touch(tc, 3, mode.get_center(), true)
+	_touch(tc, 3, mode.get_center(), false)
+	t.check(Settings.touch_place and tc.buttons["mode"].text == "Ставить", "кнопка режима переключает копание и стройку")
+	_touch(tc, 3, mode.get_center(), true)
+	_touch(tc, 3, mode.get_center(), false)
+	t.check(not Settings.touch_place, "и обратно")
+	t.check(tc.button_at(Vector2(640, 100)) == "", "касание мира кнопкой не считается")
+	var paused := [false]
+	tc.pause_pressed.connect(func() -> void: paused[0] = true)
+	var pb: Rect2 = Rect2(tc.buttons["pause"].position, tc.buttons["pause"].size)
+	_touch(tc, 4, pb.get_center(), true)
+	_touch(tc, 4, pb.get_center(), false)
+	t.check(paused[0], "кнопка паузы подаёт сигнал")
+	# режим «ставить» реально ставит блок
+	var w := WorldData.new(64, 64)
+	for y in range(40, 64):
+		for x in 64:
+			w.fg[y * 64 + x] = BlockDB.STONE
+	t.check(ProjectSettings.get_setting("display/window/handheld/orientation") == 0, "ориентация — альбомная")
+	tc.queue_free()
+	await t.process_frame

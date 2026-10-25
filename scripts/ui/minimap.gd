@@ -46,7 +46,7 @@ func _layout() -> void:
 	else:
 		texture_rect.size = Vector2(SMALL_COLS * 2, SMALL_ROWS * 2)
 		size = texture_rect.size
-		position = Vector2(vp.x - size.x - 8.0, vp.y - size.y - 84.0)
+		position = Vector2(8.0, 118.0)
 
 
 func toggle_big() -> void:

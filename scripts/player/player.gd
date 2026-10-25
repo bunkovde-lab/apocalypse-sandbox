@@ -434,7 +434,9 @@ func _physics_process(delta: float) -> void:
 	target_tile = Vector2i(floori(m.x / TILE), floori(m.y / TILE))
 	var over_ui := get_viewport().gui_get_hovered_control() != null
 	if not over_ui:
-		if Input.is_action_pressed("mine"):
+		if Input.is_action_pressed("mine") and Settings.touch_place:
+			place_selected(target_tile)
+		elif Input.is_action_pressed("mine"):
 			if is_hammer_selected():
 				hammer_tick(target_tile, delta)
 			elif is_weapon_selected():
