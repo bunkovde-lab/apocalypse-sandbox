@@ -33,6 +33,16 @@ const PURIFIER2 := 27
 const LOOT := 28
 const ALTAR_RAIDER := 29
 const ALTAR_HIVE := 30
+const SEAL := 31
+const ALTAR := 32
+const BIOMASS_BLOCK := 33
+const LAMP := 34
+const LADDER := 35
+const LAB_WALL := 36
+const LAB_FLOOR := 37
+const REACTOR_WALL := 38
+const LAB_LIGHT := 39
+const CORP_WALL := 40
 
 static var _loaded := false
 static var count := 0
@@ -47,6 +57,8 @@ static var placeable := PackedByteArray()
 static var station := PackedByteArray()      # 1 = станция крафта
 static var device := PackedByteArray()       # 1 = устройство убежища (следит ShelterManager)
 static var mob_breakable := PackedByteArray()  # 1 = мобы могут грызть (постройки, не природа)
+static var light := PackedFloat32Array()      # радиус света в блоках, 0 = не светится
+static var climb := PackedByteArray()        # 1 = по блоку можно лазить
 static var name_to_id := {}
 
 
@@ -68,6 +80,8 @@ static func ensure_loaded() -> void:
 	station.resize(count)
 	device.resize(count)
 	mob_breakable.resize(count)
+	light.resize(count)
+	climb.resize(count)
 	for entry in data:
 		var id: int = int(entry["id"])
 		assert(id >= 0 and id < count, "id блока должны идти подряд с 0")
@@ -83,6 +97,8 @@ static func ensure_loaded() -> void:
 		station[id] = 1 if bool(entry.get("station", false)) else 0
 		device[id] = 1 if bool(entry.get("device", false)) else 0
 		mob_breakable[id] = 1 if bool(entry.get("mob_breakable", false)) else 0
+		light[id] = float(entry.get("light", 0.0))
+		climb[id] = 1 if bool(entry.get("climb", false)) else 0
 		name_to_id[names[id]] = id
 	_loaded = true
 

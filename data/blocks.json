@@ -29,5 +29,15 @@
 	{"id": 27, "name": "purifier2", "title": "Фильтр-очиститель", "color": "#2f7f7a", "speck": "#b8fff0", "hardness": 1.5, "solid": false, "drop": "purifier2", "placeable": true, "device": true},
 	{"id": 28, "name": "loot", "title": "Ящик с припасами", "color": "#6a7a3a", "speck": "#e8d070", "hardness": 0.4, "solid": false, "drop": "", "placeable": false},
 	{"id": 29, "name": "altar_raider", "title": "Алтарь мародёров", "color": "#8a2f2f", "speck": "#ffd0a0", "hardness": -1.0, "solid": false, "drop": "", "placeable": false},
-	{"id": 30, "name": "altar_hive", "title": "Алтарь улья", "color": "#5a2f6a", "speck": "#b8ff80", "hardness": -1.0, "solid": false, "drop": "", "placeable": false}
+	{"id": 30, "name": "altar_hive", "title": "Алтарь улья", "color": "#5a2f6a", "speck": "#b8ff80", "hardness": -1.0, "solid": false, "drop": "", "placeable": false},
+	{"id": 31, "name": "seal", "title": "Печать", "color": "#3a1f2a", "speck": "#c0304a", "hardness": -1.0, "solid": true, "drop": "", "placeable": false},
+	{"id": 32, "name": "altar", "title": "Алтарь", "color": "#4a3a6a", "speck": "#ffe08a", "hardness": -1.0, "solid": false, "drop": "", "placeable": false},
+	{"id": 33, "name": "biomass_block", "title": "Биомасса", "color": "#5f7f3a", "speck": "#c8e870", "hardness": 0.6, "solid": true, "drop": "biomass", "placeable": false},
+	{"id": 34, "name": "lamp", "title": "Лампа", "color": "#f2d98a", "speck": "#fff6c8", "hardness": 0.3, "solid": false, "drop": "lamp", "placeable": true, "light": 8.0},
+	{"id": 35, "name": "ladder", "title": "Лестница", "color": "#a8803a", "speck": "#5a4018", "hardness": 0.2, "solid": false, "drop": "ladder", "placeable": true, "climb": true},
+	{"id": 36, "name": "lab_wall", "title": "Стена лаборатории", "color": "#b8c4d4", "speck": "#8a9ab0", "hardness": 2.5, "solid": true, "drop": "", "placeable": false},
+	{"id": 37, "name": "lab_floor", "title": "Пол лаборатории", "color": "#8a9aae", "speck": "#6a7a90", "hardness": 2.5, "solid": true, "drop": "", "placeable": false},
+	{"id": 38, "name": "reactor_wall", "title": "Стена реактора", "color": "#4a3a3e", "speck": "#ff5a2a", "hardness": 4.0, "solid": true, "drop": "", "placeable": false},
+	{"id": 39, "name": "lab_light", "title": "Лабораторный свет", "color": "#6ad8ff", "speck": "#e8fbff", "hardness": 0.3, "solid": false, "drop": "", "placeable": false, "light": 10.0},
+	{"id": 40, "name": "corp_wall", "title": "Корпоративная стена", "color": "#dfe6ee", "speck": "#9fb0c4", "hardness": 2.0, "solid": true, "drop": "", "placeable": false}
 ]

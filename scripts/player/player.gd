@@ -22,6 +22,9 @@ const INVULN_TIME := 0.7
 const REGEN_DELAY := 5.0      # секунд без урона до начала лечения
 const REGEN_RATE := 2.0       # здоровья в секунду
 const HAMMER_REPAIR := 2.0    # прочности блока в секунду
+const CLIMB_SPEED := 110.0
+const JET_MAX := 2.5          # секунд полёта джетпака
+const SLOTS := ["head", "body", "legs", "mod1", "mod2"]
 
 var world: WorldData
 var combat: EnemyManager
@@ -45,22 +48,39 @@ var attack_cd := 0.0
 var spawn_pos := Vector2.ZERO
 var swing_time := 0.0         # для отрисовки взмаха
 var deaths := 0
+var equip := {"head": "", "body": "", "legs": "", "mod1": "", "mod2": ""}
+var rad := 0.0                # радиация 0..100
+var rad_source := 0.0         # скорость набора радиации от окружения (в секунду), ставит RadiationManager
+var jet_fuel := JET_MAX
+var climbing := false
 var home_state := 0           # 1 = бафф «Дом» (стабильность 80+), -1 = «Тревога» (кризис)
 var survivors: SurvivorManager
 var bosses: BossManager
 var mouse_world := Vector2.ZERO
 
 
-func physics_step(delta: float, move_dir: float, jump_pressed: bool) -> void:
+func physics_step(delta: float, move_dir: float, jump_pressed: bool, down_pressed: bool = false) -> void:
 	delta = minf(delta, 0.05)
 	_tick_timers(delta)
 	if knock_time <= 0.0:
 		vel.x = move_dir * MOVE_SPEED * (1.1 if home_state > 0 else 1.0)
 	if move_dir != 0.0:
 		facing = 1 if move_dir > 0.0 else -1
-	if jump_pressed and on_floor:
-		vel.y = -JUMP_SPEED
-	vel.y = minf(vel.y + GRAVITY * delta, MAX_FALL)
+	var c := tile_pos()
+	var on_ladder := BlockDB.climb[world.get_block(c.x, c.y)] == 1
+	climbing = false
+	if on_ladder and (jump_pressed or down_pressed or not on_floor):
+		climbing = true
+		vel.y = (-CLIMB_SPEED if jump_pressed else (CLIMB_SPEED if down_pressed else 0.0))
+	else:
+		if jump_pressed and on_floor:
+			vel.y = -JUMP_SPEED
+		elif jump_pressed and equip["mod1"] == "jetpack" and jet_fuel > 0.0:
+			vel.y = maxf(vel.y - 2400.0 * delta, -280.0)
+			jet_fuel = maxf(0.0, jet_fuel - delta)
+		vel.y = minf(vel.y + GRAVITY * delta, MAX_FALL)
+	if on_floor or climbing:
+		jet_fuel = minf(JET_MAX, jet_fuel + delta * 2.0)
 	var r := TileCollider.move(world, position, SIZE, vel, delta)
 	position = r["pos"]
 	vel = r["vel"]
@@ -73,8 +93,64 @@ func _tick_timers(delta: float) -> void:
 	knock_time = maxf(0.0, knock_time - delta)
 	swing_time = maxf(0.0, swing_time - delta)
 	since_damage += delta
-	if since_damage >= REGEN_DELAY and hp < max_hp:
+	if rad_source > 0.0:
+		add_rad(rad_source * delta)
+	else:
+		rad = maxf(0.0, rad - 1.5 * delta)
+	if rad >= 100.0:
+		apply_dot(3.0 * delta)
+	if since_damage >= REGEN_DELAY and hp < max_hp and rad < 50.0:
 		hp = minf(max_hp, hp + REGEN_RATE * (2.0 if home_state > 0 else (0.5 if home_state < 0 else 1.0)) * delta)
+
+
+## Снижение урона от экипировки (0..0.8).
+func defense() -> float:
+	var d := 0.0
+	for slot in SLOTS:
+		var it: String = equip[slot]
+		if it != "":
+			d += ItemDB.stat(it, "defense")
+	return minf(d, 0.8)
+
+
+## Защита от радиации 0..1: костюм и фильтр.
+func rad_resist() -> float:
+	var r := 0.0
+	for slot in SLOTS:
+		var it: String = equip[slot]
+		if it != "":
+			r = maxf(r, ItemDB.stat(it, "rad_resist"))
+	return minf(r, 1.0)
+
+
+func add_rad(amount: float) -> void:
+	rad = clampf(rad + amount * (1.0 - rad_resist()), 0.0, 100.0)
+
+
+## Постоянный урон без отбрасывания (радиация, кислота). Может убить.
+func apply_dot(amount: float) -> void:
+	if hp <= 0.0:
+		return
+	hp -= amount
+	since_damage = 0.0
+	if hp <= 0.0:
+		die()
+
+
+## Надевает броню или модуль из инвентаря; прежний предмет возвращается в рюкзак.
+func equip_item(item: String) -> bool:
+	var k := ItemDB.kind(item)
+	if (k != "armor" and k != "module") or inv.count(item) <= 0:
+		return false
+	var slot := str(ItemDB.items[item].get("slot", ""))
+	if not equip.has(slot):
+		return false
+	inv.remove(item, 1)
+	var old: String = equip[slot]
+	if old != "":
+		inv.add(old, 1)
+	equip[slot] = item
+	return true
 
 
 func center() -> Vector2:
@@ -213,20 +289,27 @@ func place_selected(t: Vector2i) -> bool:
 	var item := selected_item()
 	if item == "":
 		return false
-	if ItemDB.kind(item) == "consumable":
+	var kind := ItemDB.kind(item)
+	if kind == "consumable" or kind == "armor" or kind == "module":
 		return use_item(item)
 	return place_block(t, item)
 
 
 ## Использует расходник (аптечка). Возвращает true, если предмет израсходован.
 func use_item(item: String) -> bool:
-	if ItemDB.kind(item) != "consumable" or inv.count(item) <= 0 or attack_cd > 0.0 or hp <= 0.0:
+	var k := ItemDB.kind(item)
+	if (k == "armor" or k == "module") and hp > 0.0:
+		return equip_item(item)
+	if k != "consumable" or inv.count(item) <= 0 or attack_cd > 0.0 or hp <= 0.0:
 		return false
 	var heal := ItemDB.stat(item, "heal")
-	if heal <= 0.0 or hp >= max_hp:
+	var rad_heal := ItemDB.stat(item, "rad_heal")
+	var useful := (heal > 0.0 and hp < max_hp) or (rad_heal > 0.0 and rad > 0.0)
+	if not useful:
 		return false
 	inv.remove(item, 1)
 	hp = minf(max_hp, hp + heal)
+	rad = maxf(0.0, rad - rad_heal)
 	attack_cd = 0.8
 	return true
 
@@ -258,7 +341,11 @@ func try_attack(aim: Vector2) -> bool:
 		var aim_dir := aim - center()
 		if aim_dir.length() < 1.0:
 			aim_dir = Vector2(dir, 0)
-		combat.fire(center(), aim_dir, ItemDB.damage(item))
+		var pellets := int(ItemDB.stat(item, "pellets", 1.0))
+		var spread := ItemDB.stat(item, "spread", 0.0)
+		for i in pellets:
+			var a := aim_dir.angle() + (i - (pellets - 1) * 0.5) * spread
+			combat.fire(center(), Vector2.from_angle(a), ItemDB.damage(item))
 		return true
 	return false
 
@@ -267,6 +354,7 @@ func try_attack(aim: Vector2) -> bool:
 func take_damage(amount: float, from_x: float) -> bool:
 	if invuln > 0.0 or hp <= 0.0:
 		return false
+	amount *= 1.0 - defense()
 	hp -= amount
 	invuln = INVULN_TIME
 	since_damage = 0.0
@@ -306,6 +394,7 @@ func respawn() -> void:
 	position = spawn_pos
 	vel = Vector2.ZERO
 	hp = max_hp
+	rad = 0.0
 	invuln = 2.0
 	since_damage = 99.0
 
@@ -333,7 +422,7 @@ func nearby_stations() -> Dictionary:
 func _physics_process(delta: float) -> void:
 	if world == null:
 		return
-	physics_step(delta, Input.get_axis("move_left", "move_right"), Input.is_action_pressed("jump"))
+	physics_step(delta, Input.get_axis("move_left", "move_right"), Input.is_action_pressed("jump"), Input.is_action_pressed("move_down"))
 	var m := get_global_mouse_position()
 	mouse_world = m
 	target_tile = Vector2i(floori(m.x / TILE), floori(m.y / TILE))

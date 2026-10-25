@@ -18,6 +18,8 @@ var surface := PackedInt32Array()    # y поверхности в каждой 
 var biome := PackedByteArray()       # биом поверхности в каждой колонке
 
 var structures: Array = []           # описания построек: {type, rect, altar, spawns, ...}
+var altars := {}                     # Vector2i -> id босса (data/bosses.json)
+var seals_open := {}                 # id слоя -> true, когда печать снята
 var tombstones := {}                 # Vector2i -> {предмет: количество}, вещи погибшего игрока
 var damage := {}                     # индекс клетки -> накопленный урон
 var dirty_chunks := {}               # Vector2i -> true (для сохранений)
@@ -123,6 +125,17 @@ func has_placed_wall(x: int, y: int) -> bool:
 	return v != 0 and v != 255
 
 
+## Заменяет воздухом полосу строк y0..y1 по всей ширине. Сигнал block_changed только для колонок emit_x0..emit_x1.
+func open_rows(y0: int, y1: int, emit_x0: int, emit_x1: int) -> void:
+	for y in range(y0, y1 + 1):
+		for x in width:
+			fg[y * width + x] = BlockDB.AIR
+		for x in range(maxi(0, emit_x0), mini(width - 1, emit_x1) + 1):
+			block_changed.emit(x, y)
+		for cx in chunks_wide():
+			dirty_chunks[Vector2i(cx, floori(y / float(CHUNK)))] = true
+
+
 func damage_fraction(x: int, y: int) -> float:
 	if not in_bounds(x, y):
 		return 0.0
@@ -130,6 +143,17 @@ func damage_fraction(x: int, y: int) -> float:
 	if id == BlockDB.AIR or BlockDB.hardness[id] <= 0.0:
 		return 0.0
 	return float(damage.get(y * width + x, 0.0)) / BlockDB.hardness[id]
+
+
+## Убирает записи ящиков, чей блок позже затёрла генерация.
+func prune_loot() -> void:
+	for pos in tombstones.keys():
+		if get_block(pos.x, pos.y) != BlockDB.LOOT and get_block(pos.x, pos.y) != BlockDB.TOMBSTONE:
+			tombstones.erase(pos)
+	for pos in altars.keys():
+		if get_block(pos.x, pos.y) != BlockDB.ALTAR and get_block(pos.x, pos.y) != BlockDB.ALTAR_RAIDER \
+				and get_block(pos.x, pos.y) != BlockDB.ALTAR_HIVE:
+			altars.erase(pos)
 
 
 func chunks_wide() -> int:

@@ -21,6 +21,7 @@ static func generate(world: WorldData) -> void:
 	_ruins(world, cx, arena_x)
 	_swamp_nest(world, int(world.width * 0.1))
 	_raider_camp(world, int(world.width * 0.7))
+	_wasteland_arena(world, int(world.width * 0.3))
 
 
 # ---------- Помощники ----------
@@ -105,6 +106,7 @@ static func _boss_arena(world: WorldData, xc: int) -> void:
 	_rect(world, xc + 15, base - 2, xc + 17, base - 1, BlockDB.CONCRETE)
 	_rect(world, xc - 1, base - 1, xc + 1, base - 1, BlockDB.CONCRETE)
 	_put(world, xc, base - 2, BlockDB.ALTAR_RAIDER)
+	world.altars[Vector2i(xc, base - 2)] = "chief"
 	# разрушенные колонны по краям арены
 	for side in [-1, 1]:
 		var px: int = xc + side * half
@@ -164,6 +166,7 @@ static func _swamp_nest(world: WorldData, xc: int) -> void:
 	for dx in [-17, -9, 9, 17]:
 		_rect(world, xc + dx - 1, y_floor - 1, xc + dx + 1, y_floor - 1, BlockDB.MUD)
 	_put(world, xc, y_floor - 1, BlockDB.ALTAR_HIVE)
+	world.altars[Vector2i(xc, y_floor - 1)] = "queen"
 	_loot(world, xc - 14, y_floor - 1, true)
 	_loot(world, xc + 14, y_floor - 1)
 	world.structures.append({"type": "arena_hive", "altar": Vector2i(xc, y_floor - 1),
@@ -208,9 +211,32 @@ static func _raider_camp(world: WorldData, xc: int) -> void:
 	_rect(world, xc, y_floor - 10, xc, y_floor - 4, BlockDB.CONCRETE)
 	for dx in [-14, -6, 8, 15]:
 		_loot(world, xc + dx, y_floor - 1, dx == 15)
+	_put(world, xc + 17, y_floor - 1, BlockDB.ALTAR)
+	world.altars[Vector2i(xc + 17, y_floor - 1)] = "commander"
 	var bunker_guards: Array = []
 	for gx in [-10, -2, 6, 12]:
 		bunker_guards.append(Vector2i(xc + gx, y_floor))
 	world.structures.append({"type": "bunker", "rect": Rect2i(xc - 18, y_floor - 10, 37, 10),
 		"spawns": bunker_guards, "floor": y_floor,
 		"entry": Vector2i(bunker_entry, world.surface[bunker_entry])})
+
+
+# ---------- Арена Хозяина пустоши ----------
+
+static func _wasteland_arena(world: WorldData, xc: int) -> void:
+	var half := 30
+	var base := world.surface[xc]
+	_flatten(world, xc - half - 2, xc + half + 2, base)
+	# каменные гребни по краям и плита с алтарём
+	for side in [-1, 1]:
+		for dx in range(0, 4):
+			var h := 3 - dx
+			for k in range(1, h + 1):
+				_put(world, xc + side * (half - dx), base - k, BlockDB.SAND)
+	_rect(world, xc - 2, base - 1, xc + 2, base - 1, BlockDB.CONCRETE)
+	_put(world, xc, base - 2, BlockDB.ALTAR)
+	world.altars[Vector2i(xc, base - 2)] = "wasteland_lord"
+	_loot(world, xc - 22, base - 1, true)
+	_loot(world, xc + 22, base - 1)
+	world.structures.append({"type": "arena_wasteland", "altar": Vector2i(xc, base - 2),
+		"rect": Rect2i(xc - half, base - 30, half * 2 + 1, 40)})

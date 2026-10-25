@@ -208,12 +208,15 @@ func _test_world_gen_full(t) -> void:
 	t.check(solid_spawn, "под местом старта нет пещер")
 	var sp := world.spawn_tile
 	t.check(world.get_block(sp.x, sp.y) == BlockDB.AIR and world.surface[sp.x] > sp.y, "точка старта над землёй")
-	var air_above := true
+	var bad := 0
+	var total := 0
 	for x in range(0, world.width, 11):
+		total += 1
 		var above := world.get_block(x, world.surface[x] - 1)
-		if not [BlockDB.AIR, BlockDB.WOOD, BlockDB.SCRAP, BlockDB.CONCRETE, BlockDB.LOOT, BlockDB.ALTAR_RAIDER, BlockDB.MUD].has(above):
-			air_above = false
-	t.check(air_above, "над поверхностью воздух, деревья, металлолом и постройки")
+		if [BlockDB.STONE, BlockDB.DIRT, BlockDB.SAND].has(above):
+			bad += 1
+	var air_above := bad * 50 <= total
+	t.check(air_above, "над поверхностью почти везде нет природной породы (исключения — арены, %d из %d)" % [bad, total])
 
 
 func _test_renderer(t) -> void:

@@ -25,6 +25,9 @@ var shot_damage := 8.0
 var shoot_timer := 1.0
 var keep_dist := 0.0             # дальний бой: не подходит ближе этого расстояния
 var retreat := false             # отступает, если игрок ближе 70% keep_dist
+var armor := 1.0                 # множитель получаемого урона (меньше — крепче)
+var fly := false
+var forced_vx := NAN             # рывок: задаёт горизонтальную скорость в обход ИИ
 var break_max := 0.0             # самый прочный блок, который враг может сгрызть
 var size := Vector2(14, 30)
 var color := Color.WHITE
@@ -50,6 +53,8 @@ func setup(d: Dictionary, w: WorldData, night: int = 1) -> void:
 	speed = float(d["speed"])
 	jump_speed = float(d.get("jump", 470.0))
 	break_max = float(d.get("break", 0.0))
+	armor = float(d.get("armor", 1.0))
+	fly = bool(d.get("fly", false))
 	ranged = bool(d.get("ranged", false))
 	shot_cd = float(d.get("shot_cd", 2.0))
 	shot_range = float(d.get("shot_range", 220.0))
@@ -89,7 +94,7 @@ func update(delta: float, target: Rect2, horde: bool) -> bool:
 			elif absf(to.x) < keep_dist:
 				move_dir = 0.0
 				facing = 1 if to.x > 0.0 else -1
-		if on_floor and (hit_wall or (to.y < -24.0 and absf(to.x) < 48.0)):
+		if on_floor and ((hit_wall and not (break_max > 0.0 and _gnaw_target() != Vector2i(-1, -1))) or (to.y < -24.0 and absf(to.x) < 48.0)):
 			jump = true
 	else:
 		wander_timer -= delta
@@ -101,6 +106,12 @@ func update(delta: float, target: Rect2, horde: bool) -> bool:
 		facing = 1 if move_dir > 0.0 else -1
 	if knock_time <= 0.0:
 		vel.x = move_dir * speed
+	if not is_nan(forced_vx):
+		vel.x = forced_vx
+	if fly:
+		_fly_step(delta, target, horde, move_dir)
+		queue_redraw()
+		return rect().grow(2.0).intersects(target)
 	if jump:
 		vel.y = -jump_speed
 	vel.y = minf(vel.y + GRAVITY * delta, MAX_FALL)
@@ -115,8 +126,28 @@ func update(delta: float, target: Rect2, horde: bool) -> bool:
 	return rect().grow(2.0).intersects(target)
 
 
+## Дрон: летит к цели, зависая чуть выше неё, обтекает стены.
+func _fly_step(delta: float, target: Rect2, horde: bool, move_dir: float) -> void:
+	var to := target.get_center() + Vector2(0, -44) - center()
+	var chase := horde or to.length() < AGGRO_RANGE
+	if knock_time <= 0.0:
+		if chase:
+			vel.x = move_dir * speed
+			vel.y = clampf(to.y * 3.0, -speed, speed)
+		else:
+			vel = vel * 0.9
+	var r := TileCollider.move(world, position, size, vel, delta)
+	position = r["pos"]
+	vel = r["vel"]
+	hit_wall = r["hit_wall"]
+	if hit_wall and chase:
+		vel.y = -speed          # упёрся в стену — поднимается над ней
+		position.y -= 2.0
+	on_floor = false
+
+
 ## Грызёт слабый блок перед собой (самый нижний твёрдый на высоте тела). Возвращает true, если блок разрушен.
-func gnaw(delta: float) -> bool:
+func _gnaw_target() -> Vector2i:
 	var fx := floori((position.x + (size.x + 1.0 if facing > 0 else -1.0)) / TILE)
 	var foot := floori((position.y + size.y - 1.0) / TILE)
 	var head := floori(position.y / TILE)
@@ -126,15 +157,23 @@ func gnaw(delta: float) -> bool:
 		var id := world.get_block(fx, ty)
 		var h := BlockDB.hardness[id]
 		if h < 0.0 or h > break_max or BlockDB.mob_breakable[id] == 0:
-			return false
-		return world.damage_block(fx, ty, BREAK_RATE * delta)
-	return false
+			return Vector2i(-1, -1)
+		return Vector2i(fx, ty)
+	return Vector2i(-1, -1)
+
+
+func gnaw(delta: float) -> bool:
+	var t := _gnaw_target()
+	if t.x < 0:
+		return false
+	return world.damage_block(t.x, t.y, BREAK_RATE * delta)
 
 
 ## Получить урон. dir = направление удара (1 вправо, -1 влево). Возвращает true, если враг погиб.
 func take_damage(amount: float, dir: int) -> bool:
 	if dead:
 		return false
+	amount *= armor
 	hp -= amount
 	hit_flash = 0.12
 	knock_time = 0.2

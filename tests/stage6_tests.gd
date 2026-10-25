@@ -93,6 +93,8 @@ func _test_world(t) -> void:
 	t.check(ruins >= 8, "в руинах не меньше 8 зданий (%d)" % ruins)
 	var biomes_ok := true
 	for s in big.structures:
+		if not s.has("rect") or s["type"] in ["arena_mine", "arena_nest"]:
+			continue
 		var r: Rect2i = s["rect"]
 		var b := big.biome[r.position.x + r.size.x / 2]
 		match s["type"]:
@@ -100,6 +102,8 @@ func _test_world(t) -> void:
 				biomes_ok = biomes_ok and b == WorldGen.BIOME_RUINS
 			"arena_hive":
 				biomes_ok = biomes_ok and b == WorldGen.BIOME_SWAMP
+			"arena_wasteland":
+				biomes_ok = biomes_ok and b == WorldGen.BIOME_WASTELAND
 			"camp", "bunker":
 				biomes_ok = biomes_ok and b == WorldGen.BIOME_RAIDERS
 	t.check(biomes_ok, "каждая постройка в своём биоме")

@@ -1,0 +1,11 @@
+[
+	{"id": "chief", "def": "boss_raider_chief", "flag": "boss_1", "item": "raider_beacon", "name": "Главарь мародёров", "win": "Главарь мародёров повержен. Открыты метро и армированный бетон."},
+	{"id": "queen", "def": "boss_hive_queen", "flag": "boss_2", "item": "spore_lure", "name": "Королева-матка", "win": "Королева-матка мертва. Открыты шахты, антирад и фильтр-очиститель."},
+	{"id": "commander", "def": "boss_commander", "flag": "boss_3", "item": "commander_flare", "name": "Командир рейдеров", "win": "Командир рейдеров пал. Открыты дробовик и тяжёлая оборона."},
+	{"id": "wasteland_lord", "def": "boss_wasteland_lord", "flag": "boss_4", "item": "radio_beacon", "name": "Хозяин пустоши", "win": "Хозяин пустоши побеждён. Открыты защитный костюм и военные бункеры."},
+	{"id": "corp_guard", "def": "boss_corp_guard", "flag": "boss_5", "item": "access_card", "name": "Корпоративный страж", "win": "Корпоративный страж разобран. Открыты сплавы и плазма."},
+	{"id": "mine_king", "def": "boss_mine_king", "flag": "boss_6", "item": "crystal_heart", "name": "Король шахты", "win": "Король шахты рассыпался. Открыты джетпак и гнёзда мутантов."},
+	{"id": "nest_brain", "def": "boss_nest_brain", "flag": "boss_7", "item": "mutagen_vial", "name": "Мозг гнезда", "win": "Мозг гнезда уничтожен. Путь к лабораториям свободен."},
+	{"id": "director", "def": "boss_director", "flag": "boss_8", "item": "director_keycard", "name": "Директор проекта", "win": "Директор проекта остановлен. Ключ-карта реактора у вас."},
+	{"id": "core", "def": "boss_core", "flag": "boss_9", "item": "core_key", "name": "ИИ «Ядро»", "win": "ИИ «Ядро» побеждён."}
+]

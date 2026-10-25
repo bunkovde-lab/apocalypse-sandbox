@@ -29,6 +29,8 @@ static func generate(seed_value: int, w: int = 4200, h: int = 1200) -> WorldData
 	_fill_terrain(world)
 	_decorate_surface(world)
 	StructureGen.generate(world)
+	LayerGen.generate(world)
+	world.prune_loot()
 	var cx := w / 2
 	world.spawn_tile = Vector2i(cx, world.surface[cx] - 4)
 	return world

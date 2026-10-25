@@ -20,6 +20,7 @@ var wave_budget := 0
 var wave_night := 0
 var day_spawns := true
 var kills := 0
+var spawn_mult := 1.0            # события (пыльная буря) ускоряют появление врагов
 
 
 func setup(w: WorldData, p: Player, c: DayClock) -> void:
@@ -98,13 +99,13 @@ func hostile_shot(from: Vector2, dir: Vector2, dmg: float, speed: float = 260.0,
 func _spawn_logic(delta: float) -> void:
 	if clock.is_night():
 		if wave_budget > 0:
-			spawn_timer -= delta
+			spawn_timer -= delta * spawn_mult
 			if spawn_timer <= 0.0 and enemies.size() < max_alive(wave_night):
 				if spawn_random(wave_night):
 					wave_budget -= 1
 				spawn_timer = maxf(0.6, 2.0 - 0.15 * wave_night)
 	elif day_spawns:
-		day_spawn_timer -= delta
+		day_spawn_timer -= delta * spawn_mult
 		if day_spawn_timer <= 0.0:
 			day_spawn_timer = 25.0
 			if enemies.size() < 2:

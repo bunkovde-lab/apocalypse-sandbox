@@ -5,6 +5,9 @@ extends CanvasLayer
 var label := Label.new()
 var help := Label.new()
 var panel := Label.new()
+var banner := Label.new()
+var equip_label := Label.new()
+var rad_bar := ProgressBar.new()
 var boss_label := Label.new()
 var boss_bar := ProgressBar.new()
 var hp_bar := ProgressBar.new()
@@ -49,6 +52,28 @@ func _init() -> void:
 	panel.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	add_child(panel)
 
+	_style(banner)
+	banner.add_theme_font_size_override("font_size", 15)
+	banner.anchor_left = 0.5
+	banner.anchor_right = 0.5
+	banner.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	banner.position = Vector2(0, 62)
+	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(banner)
+	_style(equip_label)
+	equip_label.add_theme_font_size_override("font_size", 12)
+	equip_label.position = Vector2(8, 92)
+	add_child(equip_label)
+	rad_bar.position = Vector2(8, 72)
+	rad_bar.size = Vector2(180, 10)
+	rad_bar.custom_minimum_size = Vector2(180, 10)
+	rad_bar.show_percentage = false
+	rad_bar.max_value = 100.0
+	rad_bar.add_theme_stylebox_override("fill", _flat(Color(0.55, 0.85, 0.2)))
+	rad_bar.add_theme_stylebox_override("background", _flat(Color(0.08, 0.12, 0.05, 0.8)))
+	rad_bar.visible = false
+	add_child(rad_bar)
+
 	_style(boss_label)
 	boss_label.add_theme_font_size_override("font_size", 16)
 	boss_label.anchor_left = 0.5
@@ -85,6 +110,19 @@ func set_boss(boss_name: String, hp: float, max_hp: float) -> void:
 		boss_label.text = boss_name
 		boss_bar.max_value = max_hp
 		boss_bar.value = maxf(hp, 0.0)
+
+
+func set_rad(rad: float) -> void:
+	rad_bar.visible = rad > 0.5
+	rad_bar.value = rad
+
+
+func set_banner(text: String) -> void:
+	banner.text = text
+
+
+func set_equip(text: String) -> void:
+	equip_label.text = text
 
 
 func set_text(t: String) -> void:

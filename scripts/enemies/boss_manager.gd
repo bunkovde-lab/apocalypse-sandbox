@@ -5,16 +5,14 @@ extends Node2D
 
 signal message(text: String)
 signal boss_changed(boss_name: String, hp: float, max_hp: float)
+signal won(flag: String)
 
 const LEASH := 70.0 * 16.0        # дальше игрок уходит — бой сбрасывается
 
-# Алтарь -> описание босса. id флага прогресса и рецепт открываются при победе.
-const ALTARS := {
-	BlockDB.ALTAR_RAIDER: {"item": "raider_beacon", "boss": "boss_raider_chief", "flag": "boss_1",
-		"name": "Главарь мародёров", "win": "Главарь мародёров повержен. Открыт армированный бетон."},
-	BlockDB.ALTAR_HIVE: {"item": "spore_lure", "boss": "boss_hive_queen", "flag": "boss_2",
-		"name": "Королева-матка", "win": "Королева-матка мертва. Открыт фильтр-очиститель."},
-}
+# Боссы и их приманки лежат в data/bosses.json. Старые блоки-алтари связаны с боссами напрямую.
+const LEGACY_ALTARS := {BlockDB.ALTAR_RAIDER: "chief", BlockDB.ALTAR_HIVE: "queen"}
+
+static var _defs := {}
 
 var world: WorldData
 var player: Player
@@ -23,6 +21,27 @@ var boss: Boss
 var current: Dictionary = {}
 var altar_tile := Vector2i.ZERO
 var defeats := 0
+
+
+static func boss_info(id: String) -> Dictionary:
+	if _defs.is_empty():
+		var file := FileAccess.open("res://data/bosses.json", FileAccess.READ)
+		for e in JSON.parse_string(file.get_as_text()):
+			_defs[str(e["id"])] = e
+	return _defs.get(id, {})
+
+
+static func all_bosses() -> Array:
+	boss_info("chief")
+	return _defs.values()
+
+
+## id босса, чей алтарь стоит на клетке, или "".
+func boss_at(t: Vector2i) -> String:
+	if world.altars.has(t):
+		return str(world.altars[t])
+	var id := world.get_block(t.x, t.y)
+	return str(LEGACY_ALTARS.get(id, ""))
 
 
 func setup(w: WorldData, p: Player, c: EnemyManager) -> void:
@@ -43,12 +62,10 @@ func is_active() -> bool:
 
 ## E на алтаре: тратит приманку и вызывает босса.
 func interact(t: Vector2i, p: Player) -> String:
-	var id := world.get_block(t.x, t.y)
-	if not ALTARS.has(id):
+	var boss_id := boss_at(t)
+	if boss_id == "" or not p.tile_in_reach(t):
 		return ""
-	if not p.tile_in_reach(t):
-		return ""
-	var info: Dictionary = ALTARS[id]
+	var info := boss_info(boss_id)
 	if Progress.has(str(info["flag"])):
 		return "Здесь уже всё кончено."
 	if is_active():
@@ -63,7 +80,7 @@ func interact(t: Vector2i, p: Player) -> String:
 func summon(info: Dictionary, altar: Vector2i) -> Boss:
 	current = info
 	altar_tile = altar
-	var def: Dictionary = EnemyDB.defs[str(info["boss"])]
+	var def: Dictionary = EnemyDB.defs[str(info["def"])]
 	var side := 1 if player.center().x < altar.x * 16.0 else -1
 	var pos := Vector2((altar.x + side * 14) * 16.0, 0.0)
 	# босс появляется на полу арены рядом с алтарём
@@ -71,6 +88,7 @@ func summon(info: Dictionary, altar: Vector2i) -> Boss:
 	while not world.is_solid(floori(pos.x / 16.0), floor_y) and floor_y < altar.y + 20:
 		floor_y += 1
 	boss = combat.spawn_at(def, pos, 1, floor_y * 16.0) as Boss
+	boss.arena_center = Vector2(altar.x * 16.0 + 8.0, altar.y * 16.0)
 	boss.died.connect(_on_boss_died)
 	boss_changed.emit(str(info["name"]), boss.hp, boss.max_hp)
 	return boss
@@ -95,6 +113,7 @@ func _on_boss_died(e: Enemy) -> void:
 			m.take_damage(9999.0, 1)
 	boss_changed.emit("", 0.0, 1.0)
 	message.emit(str(info["win"]))
+	won.emit(str(info["flag"]))
 	boss = null
 	current = {}
 

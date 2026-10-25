@@ -78,8 +78,14 @@ func _become_resident(s: Survivor, bed: Vector2i) -> void:
 	s.resident = true
 	s.home = bed
 	s.role = s.best_role(rng)
+	s.deadline = 0.0
 	s.teleport_home()
 	residents.append(s)
+	if s.signal_event:
+		s.signal_event = false
+		for item in {"scrap": 8, "medkit": 2, "bullet": 12}:
+			player.inv.add(item, {"scrap": 8, "medkit": 2, "bullet": 12}[item])
+		message.emit("Спасённый поделился припасами: металлолом, аптечки и патроны.")
 	shelter.evaluate()
 
 
@@ -108,6 +114,13 @@ func interact_at(world_pos: Vector2, p: Player) -> String:
 func update(delta: float) -> void:
 	if world == null or shelter == null:
 		return
+	for s in stranded.duplicate():
+		if s.deadline > 0.0:
+			s.deadline -= delta
+			if s.deadline <= 0.0:
+				stranded.erase(s)
+				s.queue_free()
+				message.emit("Сигнал оборвался: %s не дождался помощи." % s.survivor_name)
 	shelter.manned.clear()
 	var wm := shelter.work_mult()
 	assign_timer -= delta

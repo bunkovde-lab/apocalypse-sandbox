@@ -21,6 +21,9 @@ var shelter: ShelterManager
 var survivors: SurvivorManager
 var bosses: BossManager
 var camps: CampManager
+var seals: SealManager
+var layer_spawner: LayerSpawner
+var director: EventDirector
 var tint: CanvasModulate
 var ready_done := false
 
@@ -72,6 +75,17 @@ func _ready() -> void:
 	camps = CampManager.new()
 	add_child(camps)
 	camps.setup(world, player, enemies, clock)
+	seals = SealManager.new()
+	add_child(seals)
+	seals.setup(world, player)
+	seals.message.connect(func(text: String) -> void: hud.flash_message(text, 4.0))
+	layer_spawner = LayerSpawner.new()
+	add_child(layer_spawner)
+	layer_spawner.setup(world, player, enemies)
+	director = EventDirector.new()
+	add_child(director)
+	director.setup(world, player, enemies, survivors, shelter, clock)
+	director.message.connect(func(text: String) -> void: hud.flash_message(text, 4.0))
 	for dx in [-55, 40, 85]:
 		survivors.spawn_stranded(clampi(world.spawn_tile.x + dx, 5, world.width - 6))
 	clock.night_started.connect(func(n: int) -> void: hud.flash_message("Ночь %d. Идёт орда." % n, 3.0))
@@ -110,7 +124,16 @@ func _process(delta: float) -> void:
 	var sky := SKY_COLOR.lerp(NIGHT_SKY_COLOR, clock.darkness())
 	RenderingServer.set_default_clear_color(sky.lerp(DARK_COLOR, clampf(depth / 30.0, 0.0, 1.0)))
 	hud.set_hp(player.hp, player.max_hp)
+	hud.set_rad(player.rad)
+	var banner := director.active_text()
+	var hint := seals.hint()
+	hud.set_banner(hint if hint != "" else banner)
+	var eq := PackedStringArray()
+	for slot in Player.SLOTS:
+		if player.equip[slot] != "":
+			eq.append(ItemDB.title(player.equip[slot]))
+	hud.set_equip(("Надето: " + ", ".join(eq) + "  (защита %d%%)" % int(player.defense() * 100.0)) if not eq.is_empty() else "")
 	hud.panel.text = shelter.panel_text()
-	hud.set_text("День %d, %s%s   FPS %d\nx %d  y %d  глубина %d   убито %d" % [
+	hud.set_text("День %d, %s%s   FPS %d   %s\nx %d  y %d  глубина %d   убито %d   этап %d" % [
 		clock.day, clock.clock_text(), " (ночь)" if clock.is_night() else "",
-		Engine.get_frames_per_second(), tile.x, tile.y, depth, enemies.kills])
+		Engine.get_frames_per_second(), seals.depth_title(), tile.x, tile.y, depth, enemies.kills, Progress.stage()])

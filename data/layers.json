@@ -1,0 +1,14 @@
+[
+	{"id": "metro", "title": "Метро и канализация", "y0": 190, "y1": 290, "requires": "boss_1", "boss_name": "Главарь мародёров",
+		"cap": 7, "enemies": {"sewer_rat": 6, "tunnel_zombie": 4, "lurker": 1}},
+	{"id": "mines", "title": "Шахты и кристальные пещеры", "y0": 292, "y1": 420, "requires": "boss_2", "boss_name": "Королева-матка",
+		"cap": 7, "enemies": {"cave_beetle": 5, "miner_brute": 3, "crystal_golem": 1}},
+	{"id": "bunkers", "title": "Военные бункеры", "y0": 422, "y1": 560, "requires": "boss_4", "boss_name": "Хозяин пустоши",
+		"cap": 8, "enemies": {"soldier_zombie": 5, "guard_robot": 4}},
+	{"id": "nests", "title": "Гнёзда мутантов", "y0": 562, "y1": 720, "requires": "boss_6", "boss_name": "Король шахты",
+		"cap": 9, "enemies": {"brood": 6, "creeper": 3, "spitter": 3}},
+	{"id": "labs", "title": "Корпоративные лаборатории", "y0": 722, "y1": 990, "requires": "boss_5&boss_7", "boss_name": "Корпоративный страж и Мозг гнезда",
+		"cap": 9, "enemies": {"lab_android": 4, "lab_drone": 4, "test_subject": 2}},
+	{"id": "reactor", "title": "Реактор и ядро ИИ", "y0": 992, "y1": 1196, "requires": "boss_8", "boss_name": "Директор проекта",
+		"cap": 10, "enemies": {"combat_walker": 3, "unstable_mutant": 3, "lab_drone": 3}}
+]

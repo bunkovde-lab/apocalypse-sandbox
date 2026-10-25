@@ -94,6 +94,10 @@ func _test_recipes(t) -> void:
 	for id in range(1, BlockDB.count):
 		if BlockDB.drops[id] != "":
 			obtainable[BlockDB.drops[id]] = true
+	EnemyDB.ensure_loaded()
+	for d in EnemyDB.defs.values():
+		for drop in d["drops"]:
+			obtainable[str(drop["item"])] = true
 	var changed := true
 	while changed:
 		changed = false

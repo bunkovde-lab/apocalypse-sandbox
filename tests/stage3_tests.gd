@@ -88,7 +88,7 @@ func _test_enemy_db(t) -> void:
 	t.check(EnemyDB.defs.size() >= 3, "есть минимум 3 типа врагов")
 	var ok := true
 	for d in EnemyDB.defs.values():
-		if float(d["hp"]) <= 0.0 or float(d["speed"]) <= 0.0 or float(d["damage"]) <= 0.0:
+		if float(d["hp"]) <= 0.0 or (float(d["speed"]) <= 0.0 and not d.has("boss")) or float(d["damage"]) <= 0.0:
 			ok = false
 		for drop in d["drops"]:
 			if not ItemDB.has_item(str(drop["item"])):

@@ -7,6 +7,7 @@ static func register() -> void:
 	_key("move_left", [KEY_A, KEY_LEFT])
 	_key("move_right", [KEY_D, KEY_RIGHT])
 	_key("jump", [KEY_SPACE, KEY_W, KEY_UP])
+	_key("move_down", [KEY_S, KEY_DOWN])
 	_mouse("mine", MOUSE_BUTTON_LEFT)
 	_mouse("place", MOUSE_BUTTON_RIGHT)
 	for i in 10:
